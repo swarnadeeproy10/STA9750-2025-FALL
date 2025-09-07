@@ -1,0 +1,15 @@
+---
+title: "Welcome"
+---
+# STA 9750 – Fall 2025
+
+This is the homepage for my STA 9750 course submissions website.  
+Here you can find links to project work, resources, and updates.
+
+```{r}
+#| include: false
+1+1
+```
+
+The time is: `{r} format(Sys.time(), "%A %B %d, %Y at %I:%M %p")`  
+
