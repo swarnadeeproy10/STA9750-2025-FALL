@@ -1,0 +1,46 @@
+---
+title: "STA 9750 – Fall 2025"
+---
+
+# Welcome
+
+Hello and welcome to my project submission site for **STA 9750: Data Science and Business Analytics** at Baruch College, CUNY.  
+
+This site is designed to organize and showcase my coursework, mini-projects, and submissions throughout the semester. Each section highlights a different aspect of the course — from exploratory data analysis and modeling to decision-making and optimization.  
+
+---
+
+## About Me
+
+I am a Master’s student in **Business Analytics at Baruch College (CUNY)** with a strong focus on **data science, analytics, and decision modeling**. My academic journey and professional interests revolve around applying quantitative methods, machine learning, and optimization techniques to solve real-world business problems.  
+
+I enjoy working with tools like **R, Python, SQL, and Quarto**, and I am especially interested in applying data-driven approaches in **finance, consulting, and business strategy**.  
+
+---
+
+## What You Will Find Here
+
+- **Mini-Projects & Assignments** – Hands-on applications of concepts learned in class.  
+- **Case Studies & Reports** – Analytical write-ups with insights and recommendations.  
+- **Code & Documentation** – Reproducible workflows using R and Quarto.  
+
+This site will evolve as the semester progresses. I will continue to update it with my work and reflections as I deepen my expertise in business analytics.  
+
+---
+
+## Contact
+
+- **Name:** Swarnadeep Roy  
+- **Program:** Master’s in Business Analytics, Baruch College (CUNY)  
+- **GitHub:** [github.com/swarnadeeproy10](https://github.com/swarnadeeproy10)  
+
+---
+
+Thank you for visiting my site — stay tuned for updates!
+
+```{r}
+#| include: false
+1+1
+```
+--------------
+Last Updated: `r format(Sys.time(), "%A %m %d, %Y at %H:%M%p")`
