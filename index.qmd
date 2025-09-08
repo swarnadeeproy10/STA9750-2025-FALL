@@ -10,6 +10,7 @@ This site is designed to organize and showcase my coursework, mini-projects, and
 
 ---
 
+
 ## About Me
 
 I am a Master’s student in **Business Analytics at Baruch College (CUNY)** with a strong focus on **data science, analytics, and decision modeling**. My academic journey and professional interests revolve around applying quantitative methods, machine learning, and optimization techniques to solve real-world business problems.  
@@ -20,9 +21,9 @@ I enjoy working with tools like **R, Python, SQL, and Quarto**, and I am especia
 
 ## What You Will Find Here
 
-- 📊 **Mini-Projects & Assignments** – Hands-on applications of concepts learned in class.  
-- 📝 **Case Studies & Reports** – Analytical write-ups with insights and recommendations.  
-- ⚙️ **Code & Documentation** – Reproducible workflows using R and Quarto.  
+-  **Mini-Projects & Assignments** – Hands-on applications of concepts learned in class.  
+-  **Case Studies & Reports** – Analytical write-ups with insights and recommendations.  
+-  **Code & Documentation** – Reproducible workflows using R and Quarto.  
 
 This site will evolve as the semester progresses. I will continue to update it with my work and reflections as I deepen my expertise in business analytics.  
 
