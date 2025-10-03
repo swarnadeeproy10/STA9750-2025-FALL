@@ -6,7 +6,7 @@ title: "STA 9750 – Fall 2025"
 
 Hello and welcome to my project submission site for **STA 9750: Data Science and Business Analytics** at Baruch College, CUNY.  
 
-This site is designed to organize and showcase my coursework, mini-projects, and submissions throughout the semester. Each section highlights a different aspect of the course — from exploratory data analysis and modeling to decision-making and optimization.  
+This site is designed to organize and showcase my coursework, mini-projects, and submissions throughout the semester. Each section highlights a different aspect of the course from exploratory data analysis and modeling to decision-making and optimization.  
 
 ---
 
