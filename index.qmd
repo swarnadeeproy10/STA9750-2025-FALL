@@ -23,7 +23,7 @@ I enjoy working with tools like **R, Python, SQL, and Quarto**, and I am especia
 
 -  **Mini-Projects & Assignments** – Hands-on applications of concepts learned in class.  
 -  **Case Studies & Reports** – Analytical write-ups with insights and recommendations.  
--  **Code & Documentation** – Reproducible workflows using R and Quarto.  
+- ⚙️ **Code & Documentation** – Reproducible workflows using R and Quarto.  
 
 This site will evolve as the semester progresses. I will continue to update it with my work and reflections as I deepen my expertise in business analytics.  
 
