@@ -1,6 +1,6 @@
 ---
 title: "Mini-Project 02 - Advancing Housing Accessibility Across America"
-author: "Student Analysis"
+author: "Swarnadeep Roy"
 editor:
     mode: source
 format:
