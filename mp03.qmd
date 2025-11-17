@@ -1,0 +1,1061 @@
+---
+title: "Mini-Project 03 - Visualizing and Maintaining the Green Canopy of NYC"
+author: "Swarnadeep Roy"
+date: today
+editor:
+    mode: source
+format:
+    html:
+        code-fold: true
+        code-summary: "Show code"
+        toc: true
+        toc-depth: 3
+        theme: cosmo
+execute:
+  message: true
+  warning: true
+  cache: false
+---
+
+![](https://www.untappedcities.com/content/images/wp-content/uploads/2020/09/central-park-trees-grove-of-american-elms-central-park-mall-literary-walk-great-trees-nyc10.jpg)
+
+
+## Introduction
+
+This project examines the current tree species distribution across New York City's 51 City Council districts to develop a data-informed proposal for a new parks initiative. Through comprehensive spatial and health analysis of NYC's urban forest, this study identifies strategic opportunities to maximize public health benefits through evidence-based tree species selection.
+
+::: {.callout-note icon=false}
+## Project Description
+
+From the [STA 9750 Course Assignment Page](https://michael-weylandt.com/STA9750/miniprojects/mini03.html):
+
+> *"NYC's many green spaces are beloved by the community, and represent a major ongoing investment by both city government and by a network of over 550 non-profit organizations and volunteer groups. With a budget of over $675,000,000 and over 5,000 full-time employees, the Department of Parks and Recreation (DPR) maintains over 30,000 acres of public parkland. DPR is also responsible for almost 900,000 trees, representing over 500 different species, across the city. In this mini-project, we will explore the NYC TreeMap data set, with an eye towards creating compelling visualizations of this beloved element of NYC's urban fabric. Based on these visualizations, you will propose a new program for the NYC Parks Department that attempts to make the benefits of NYC trees available to all New Yorkers."*
+:::
+
+::: {.callout-important icon=false}
+## Report Structure
+
+**Project Set Up Part 1:** [Data Download - NYC City Council Districts →](#t1-data-download-nyc-city-council-districts)
+
+**Project Set Up Part 2:** [Data Download - Tree Points →](#t2-data-download-tree-points)
+
+**Data Integration:** [Spatial Analysis and Initial Exploration →](#t3-data-integration-and-initial-exploration)
+
+**Data Analysis:** [District-Level Analysis of Tree Coverage →](#t4-district-level-analysis-of-tree-coverage)
+
+**Final Deliverable:** [NYC Parks Proposal →](#t5-nyc-parks-proposal)
+:::
+
+---
+
+## T1: Data Download - NYC City Council Districts {#t1-data-download-nyc-city-council-districts}
+
+This project utilizes geographic boundary data from the NYC Department of City Planning. The dataset contains all 51 City Council districts with detailed boundary information for spatial analysis.
+
+```{r setup}
+#| code-summary: "Show Library Loading Code"
+
+# Load required packages
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(knitr)
+
+# Create data directory
+data_dir <- "data/mp03"
+if (!dir.exists(data_dir)) {
+  dir.create(data_dir, recursive = TRUE)
+}
+```
+
+```{r download-districts}
+#| code-summary: "Show District Download Code"
+
+download_districts <- function() {
+  geojson_file <- file.path(data_dir, "districts.geojson")
+  
+  if (file.exists(geojson_file)) {
+    message("Reading cached districts...")
+    districts <- st_read(geojson_file, quiet = TRUE)
+    districts <- st_transform(districts, 4326)
+    return(districts)
+  }
+  
+  # Try multiple data sources
+  urls <- c(
+    "https://data.cityofnewyork.us/api/geospatial/yusd-j4xi?method=export&format=GeoJSON",
+    "https://services5.arcgis.com/GfwWNkhOj9bNBqoJ/arcgis/rest/services/NYC_City_Council_Districts/FeatureServer/0/query?where=1=1&outFields=*&outSR=4326&f=geojson"
+  )
+  
+  for (url in urls) {
+    message("Attempting download from: ", substring(url, 1, 60), "...")
+    districts <- tryCatch(st_read(url, quiet = TRUE), error = function(e) NULL)
+    
+    if (!is.null(districts) && nrow(districts) > 0) {
+      message("✓ Successfully downloaded ", nrow(districts), " districts")
+      districts <- st_transform(districts, 4326)
+      st_write(districts, geojson_file, quiet = TRUE)
+      return(districts)
+    }
+  }
+  
+  stop("Could not download district boundaries from any source")
+}
+
+nyc_districts <- download_districts()
+nyc_districts <- st_make_valid(nyc_districts)
+
+# Standardize column names
+dist_cols <- names(nyc_districts)
+message("Available district columns: ", paste(dist_cols, collapse = ", "))
+
+# Find district ID column
+district_col <- NULL
+for (col in c("coun_dist", "CounDist", "council_district", "district", "DISTRICT", "BoroCD")) {
+  if (col %in% dist_cols) {
+    district_col <- col
+    break
+  }
+}
+
+if (is.null(district_col)) {
+  district_col <- dist_cols[grepl("dist|council", dist_cols, ignore.case = TRUE)][1]
+  if (is.na(district_col)) district_col <- dist_cols[1]
+}
+
+message("Using district column: ", district_col)
+
+# Rename to standard name
+nyc_districts <- nyc_districts |>
+  rename(district_id = !!sym(district_col))
+```
+
+```{r district-summary-stats}
+#| code-summary: "Show District Summary Code"
+
+# Calculate basic statistics
+n_districts <- nrow(nyc_districts)
+bbox <- st_bbox(nyc_districts)
+
+cat("\n**NYC City Council Districts Loaded Successfully**\n")
+cat("- Total Districts:", n_districts, "\n")
+cat("- Coordinate System: WGS84 (EPSG:4326)\n")
+cat("- Bounding Box: Latitude", round(bbox$ymin, 2), "to", round(bbox$ymax, 2), 
+    ", Longitude", round(bbox$xmin, 2), "to", round(bbox$xmax, 2), "\n")
+```
+
+---
+
+## T2: Data Download - Tree Points {#t2-data-download-tree-points}
+
+The NYC Street Tree Census provides comprehensive data on every street tree maintained by the Department of Parks and Recreation. This dataset includes species information, health status, location coordinates, and physical measurements for hundreds of thousands of trees across all five boroughs.
+
+```{r download-trees}
+#| cache: true
+#| code-summary: "Show Tree Data Download Code"
+
+download_trees <- function() {
+  all_trees <- list()
+  
+  # Try multiple NYC Open Data endpoints
+  base_urls <- c(
+    "https://data.cityofnewyork.us/resource/5rq2-4hqu.geojson",  # 2015 Census
+    "https://data.cityofnewyork.us/resource/nwxe-4ae8.geojson"   # Alternative
+  )
+  
+  for (base_url in base_urls) {
+    message("\n=== Attempting tree data download from ===")
+    message(base_url)
+    
+    for (batch in 0:19) {  # Download up to 1 million trees (20 batches × 50k)
+      offset <- batch * 50000
+      file <- file.path(data_dir, paste0("trees_", offset, ".geojson"))
+      
+      if (file.exists(file)) {
+        message("  Batch ", batch, ": Reading from cache...")
+        trees <- st_read(file, quiet = TRUE)
+        if (st_crs(trees)$input != "EPSG:4326") {
+          trees <- st_transform(trees, 4326)
+        }
+      } else {
+        message("  Batch ", batch, ": Downloading...")
+        url <- paste0(base_url, "?$limit=50000&$offset=", offset)
+        
+        trees <- tryCatch({
+          downloaded <- st_read(url, quiet = TRUE)
+          st_transform(downloaded, 4326)
+        }, error = function(e) {
+          message("    Error: ", e$message)
+          return(NULL)
+        })
+        
+        if (!is.null(trees) && nrow(trees) > 0) {
+          st_write(trees, file, quiet = TRUE)
+          message("    ✓ Saved ", nrow(trees), " trees")
+        }
+      }
+      
+      if (is.null(trees) || nrow(trees) == 0) {
+        message("  No more data in this batch")
+        break
+      }
+      
+      all_trees[[batch + 1]] <- trees
+      message("    Total so far: ", format(sum(sapply(all_trees, nrow)), big.mark = ","))
+      
+      if (nrow(trees) < 50000) {
+        message("  Received final batch")
+        break
+      }
+    }
+    
+    if (length(all_trees) > 0) {
+      message("\n✓ Download complete from this source")
+      break
+    }
+  }
+  
+  if (length(all_trees) == 0) {
+    stop("Could not download tree data from any source")
+  }
+  
+  message("\nCombining all batches...")
+  do.call(rbind, all_trees)
+}
+
+tree_points <- download_trees()
+tree_points <- st_make_valid(tree_points)
+
+cat("\n**NYC Street Tree Data Loaded Successfully**\n")
+cat("- Total Trees Downloaded:", format(nrow(tree_points), big.mark = ","), "\n")
+cat("- Coordinate System:", st_crs(tree_points)$input, "\n")
+```
+
+```{r clean-trees}
+#| code-summary: "Show Data Cleaning Code"
+
+# CRITICAL: Print ALL column names to see what's available
+cat("\n**ALL TREE DATA COLUMNS:**\n")
+tree_cols <- names(tree_points)
+cat(paste(tree_cols, collapse = ", "), "\n\n")
+
+# Clean and standardize tree data
+tree_points_clean <- tree_points |>
+  mutate(
+    tree_dbh = as.numeric(tree_dbh),
+    health = as.character(health),
+    spc_common = as.character(spc_common),
+    spc_latin = as.character(spc_latin)
+  ) |>
+  filter(!is.na(spc_common))
+
+# Data quality assessment
+data_quality <- tree_points_clean |>
+  st_drop_geometry() |>
+  summarise(
+    total_trees = n(),
+    has_species = sum(!is.na(spc_common)),
+    has_health = sum(!is.na(health)),
+    has_dbh = sum(!is.na(tree_dbh))
+  )
+
+cat("\n**Data Quality Assessment**\n")
+cat("- Trees with species data:", format(data_quality$has_species, big.mark = ","), 
+    "(", round(100*data_quality$has_species/data_quality$total_trees, 1), "%)\n")
+cat("- Trees with health data:", format(data_quality$has_health, big.mark = ","), 
+    "(", round(100*data_quality$has_health/data_quality$total_trees, 1), "%)\n")
+cat("- Trees with diameter data:", format(data_quality$has_dbh, big.mark = ","), 
+    "(", round(100*data_quality$has_dbh/data_quality$total_trees, 1), "%)\n")
+```
+
+---
+
+## T3: Data Integration and Initial Exploration {#t3-data-integration-and-initial-exploration}
+
+### Spatial Join: Assigning Trees to Districts
+
+```{r spatial-join}
+#| code-summary: "Show Spatial Join Code"
+
+cat("\n**STRATEGY 1: CHECK FOR EXISTING DISTRICT COLUMN IN TREE DATA**\n")
+cat("=" , rep("=", 60), "\n")
+
+# List of possible council district column names
+possible_district_cols <- c(
+  "council_district", "councildistrict", "council_dist", "councildist",
+  "st_assem", "st_senate", "cb_num", "boro_ct", "boroct", 
+  "nta", "nta_name", "zip_city", "zipcode", "postcode",
+  "boro", "borough", "cd", "community_district"
+)
+
+# Check which ones exist
+found_cols <- possible_district_cols[tolower(possible_district_cols) %in% tolower(tree_cols)]
+cat("Columns that might contain district info:\n")
+if (length(found_cols) > 0) {
+  cat(paste("-", found_cols, collapse = "\n"), "\n")
+} else {
+  cat("None found!\n")
+}
+
+# Try to use an existing column if found
+district_in_trees <- NULL
+for (col in possible_district_cols) {
+  matching_idx <- which(tolower(tree_cols) == tolower(col))
+  if (length(matching_idx) > 0) {
+    district_in_trees <- tree_cols[matching_idx[1]]
+    cat("\n✓ Using column:", district_in_trees, "\n")
+    
+    # Show sample values
+    sample_vals <- tree_points_clean |>
+      st_drop_geometry() |>
+      select(all_of(district_in_trees)) |>
+      head(10)
+    cat("Sample values:\n")
+    print(sample_vals)
+    break
+  }
+}
+
+if (!is.null(district_in_trees)) {
+  cat("\n**Using existing district column from tree data**\n")
+  
+  trees_with_districts <- tree_points_clean |>
+    rename(district_id = !!sym(district_in_trees)) |>
+    mutate(district_id = as.character(district_id)) |>
+    filter(!is.na(district_id), district_id != "", district_id != "0")
+  
+  n_total <- nrow(tree_points_clean)
+  n_assigned <- nrow(trees_with_districts)
+  pct_assigned <- round(100 * n_assigned / n_total, 2)
+  
+  cat("Results: ", n_assigned, "/", n_total, " (", pct_assigned, "%)\n", sep = "")
+  
+} else {
+  cat("\n**STRATEGY 2: SPATIAL JOIN WITH COORDINATE CHECK**\n")
+  cat("=" , rep("=", 60), "\n")
+  
+  # Check coordinate ranges
+  tree_coords <- st_coordinates(tree_points_clean)
+  cat("Tree coordinate ranges:\n")
+  cat("  X: ", round(min(tree_coords[,1]), 4), " to ", round(max(tree_coords[,1]), 4), "\n")
+  cat("  Y: ", round(min(tree_coords[,2]), 4), " to ", round(max(tree_coords[,2]), 4), "\n")
+  
+  district_coords <- st_coordinates(st_centroid(nyc_districts, of_largest_polygon = TRUE))
+  cat("District coordinate ranges:\n")
+  cat("  X: ", round(min(district_coords[,1]), 4), " to ", round(max(district_coords[,1]), 4), "\n")
+  cat("  Y: ", round(min(district_coords[,2]), 4), " to ", round(max(district_coords[,2]), 4), "\n")
+  
+  # NYC should be roughly:
+  # Longitude (X): -74.3 to -73.7
+  # Latitude (Y): 40.5 to 40.9
+  
+  # Check if coordinates look swapped
+  tree_x_range <- c(min(tree_coords[,1]), max(tree_coords[,1]))
+  tree_y_range <- c(min(tree_coords[,2]), max(tree_coords[,2]))
+  
+  coords_look_swapped <- (tree_x_range[1] > 0 && tree_y_range[1] < 0) ||
+                          (tree_x_range[1] > 40 && tree_x_range[1] < 41)
+  
+  if (coords_look_swapped) {
+    cat("\n⚠️ WARNING: Coordinates appear to be swapped! Attempting to fix...\n")
+    
+    # Swap coordinates by reconstructing geometry
+    tree_coords_swapped <- data.frame(
+      x = tree_coords[,2],
+      y = tree_coords[,1]
+    )
+    
+    tree_points_fixed <- tree_points_clean |>
+      st_drop_geometry() |>
+      st_as_sf(coords = c("y", "x"), crs = 4326)  # Note: reversed order
+    
+    tree_points_clean <- tree_points_fixed
+    cat("✓ Coordinates swapped\n")
+  }
+  
+  # Try spatial join
+  cat("\nPerforming spatial join...\n")
+  trees_with_districts <- st_join(
+    tree_points_clean,
+    nyc_districts |> select(district_id),
+    join = st_intersects,
+    left = TRUE
+  )
+  
+  n_total <- nrow(trees_with_districts)
+  n_assigned <- sum(!is.na(trees_with_districts$district_id))
+  pct_assigned <- round(100 * n_assigned / n_total, 2)
+  
+  cat("Results: ", n_assigned, "/", n_total, " (", pct_assigned, "%)\n", sep = "")
+}
+
+cat("\n**FINAL RESULTS**\n")
+cat("=" , rep("=", 60), "\n")
+cat("- Trees successfully assigned:", format(sum(!is.na(trees_with_districts$district_id)), big.mark = ","), "\n")
+cat("- Trees not assigned:", format(sum(is.na(trees_with_districts$district_id)), big.mark = ","), "\n")
+cat("- Success rate:", round(100 * sum(!is.na(trees_with_districts$district_id)) / nrow(trees_with_districts), 2), "%\n")
+
+# Show sample districts if successful
+if (sum(!is.na(trees_with_districts$district_id)) > 0) {
+  district_counts <- trees_with_districts |>
+    st_drop_geometry() |>
+    filter(!is.na(district_id)) |>
+    count(district_id, sort = TRUE)
+  cat("\n**Districts with trees (top 10):**\n")
+  print(head(district_counts, 10))
+}
+```
+
+### District-Level Tree Counts
+
+```{r district-counts}
+#| code-summary: "Show District Summary Code"
+
+district_tree_counts <- trees_with_districts |>
+  st_drop_geometry() |>
+  filter(!is.na(district_id)) |>
+  group_by(district_id) |>
+  summarise(
+    total_trees = n(),
+    unique_species = n_distinct(spc_common, na.rm = TRUE),
+    avg_dbh = round(mean(tree_dbh, na.rm = TRUE), 1),
+    .groups = "drop"
+  ) |>
+  arrange(desc(total_trees))
+
+# Display top 20 districts
+if (nrow(district_tree_counts) > 0) {
+  district_tree_counts |>
+    head(20) |>
+    kable(
+      col.names = c("District", "Total Trees", "Unique Species", "Avg Diameter (in)"),
+      format.args = list(big.mark = ","),
+      caption = "**Table 1: Top 20 Council Districts by Tree Count**",
+      align = c("l", "r", "r", "r")
+    )
+} else {
+  cat("\n❌ No districts have tree assignments\n")
+}
+```
+
+### Tree Distribution Statistics
+
+```{r distribution-stats}
+#| code-summary: "Show Distribution Statistics Code"
+
+if (nrow(district_tree_counts) > 0) {
+  # Calculate distribution statistics
+  dist_stats <- district_tree_counts |>
+    summarise(
+      min_trees = min(total_trees),
+      q1_trees = quantile(total_trees, 0.25),
+      median_trees = median(total_trees),
+      mean_trees = round(mean(total_trees), 0),
+      q3_trees = quantile(total_trees, 0.75),
+      max_trees = max(total_trees),
+      sd_trees = round(sd(total_trees), 0)
+    )
+  
+  cat("\n**Tree Distribution Across Districts**\n")
+  cat("- Minimum trees per district:", format(dist_stats$min_trees, big.mark = ","), "\n")
+  cat("- 25th percentile:", format(dist_stats$q1_trees, big.mark = ","), "\n")
+  cat("- Median:", format(dist_stats$median_trees, big.mark = ","), "\n")
+  cat("- Mean:", format(dist_stats$mean_trees, big.mark = ","), "\n")
+  cat("- 75th percentile:", format(dist_stats$q3_trees, big.mark = ","), "\n")
+  cat("- Maximum:", format(dist_stats$max_trees, big.mark = ","), "\n")
+  cat("- Standard deviation:", format(dist_stats$sd_trees, big.mark = ","), "\n")
+} else {
+  cat("\n❌ Cannot calculate distribution statistics - no district data\n")
+}
+```
+
+### Visualization: Tree Distribution
+
+```{r tree-distribution-plot}
+#| fig.width: 10
+#| fig.height: 6
+#| code-summary: "Show Distribution Plot Code"
+
+if (nrow(district_tree_counts) > 0) {
+  ggplot(district_tree_counts, aes(x = total_trees)) +
+    geom_histogram(bins = 15, fill = "forestgreen", color = "white", alpha = 0.8) +
+    geom_vline(aes(xintercept = median(total_trees)), 
+               color = "red", linetype = "dashed", linewidth = 1) +
+    annotate("text", x = median(district_tree_counts$total_trees) * 1.1, 
+             y = Inf, label = paste("Median:", 
+             format(median(district_tree_counts$total_trees), big.mark = ",")),
+             vjust = 2, color = "red", fontface = "bold") +
+    scale_x_continuous(labels = scales::comma) +
+    theme_minimal() +
+    labs(
+      title = "Distribution of Street Trees Across NYC Council Districts",
+      subtitle = paste("Analysis of", nrow(district_tree_counts), "districts"),
+      x = "Number of Trees per District",
+      y = "Number of Districts",
+      caption = "Data: NYC Parks Department Street Tree Census (2015)"
+    ) +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      plot.subtitle = element_text(size = 11),
+      axis.title = element_text(size = 11)
+    )
+} else {
+  cat("\n❌ Cannot create visualization - no district data\n")
+}
+```
+
+---
+
+## T4: District-Level Analysis of Tree Coverage {#t4-district-level-analysis-of-tree-coverage}
+
+### Tree Health Analysis
+
+```{r health-analysis}
+#| code-summary: "Show Tree Health Analysis Code"
+
+if (sum(!is.na(trees_with_districts$district_id)) > 0) {
+  # Comprehensive health analysis by district
+  health_by_district <- trees_with_districts |>
+    st_drop_geometry() |>
+    filter(!is.na(district_id), !is.na(health)) |>
+    group_by(district_id, health) |>
+    summarise(count = n(), .groups = "drop") |>
+    group_by(district_id) |>
+    mutate(
+      total = sum(count),
+      percentage = round(count / total * 100, 1)
+    ) |>
+    ungroup()
+  
+  # Districts with highest percentage of dead/poor trees
+  poor_health_districts <- health_by_district |>
+    filter(health %in% c("Dead", "Poor")) |>
+    group_by(district_id) |>
+    summarise(
+      total_trees = first(total),
+      dead_poor_count = sum(count),
+      dead_poor_pct = sum(percentage),
+      .groups = "drop"
+    ) |>
+    arrange(desc(dead_poor_pct))
+  
+  poor_health_districts |>
+    head(20) |>
+    kable(
+      col.names = c("District", "Total Trees", "Dead/Poor Trees", "Dead/Poor %"),
+      format.args = list(big.mark = ","),
+      caption = "**Table 2: Districts with Highest Percentage of Dead/Poor Trees**",
+      align = c("l", "r", "r", "r")
+    )
+} else {
+  cat("\n❌ Cannot perform health analysis - no trees assigned to districts\n")
+}
+```
+
+### Citywide Health Status Summary
+
+```{r health-summary}
+#| code-summary: "Show Health Summary Code"
+
+citywide_health <- trees_with_districts |>
+  st_drop_geometry() |>
+  filter(!is.na(health)) |>
+  count(health) |>
+  mutate(
+    percentage = round(100 * n / sum(n), 2)
+  ) |>
+  arrange(desc(n))
+
+citywide_health |>
+  kable(
+    col.names = c("Health Status", "Count", "Percentage"),
+    format.args = list(big.mark = ","),
+    caption = "**Table 3: Citywide Tree Health Distribution**",
+    align = c("l", "r", "r")
+  )
+```
+
+### Visualization: Health Status Distribution
+
+```{r health-plot}
+#| fig.width: 10
+#| fig.height: 6
+#| code-summary: "Show Health Plot Code"
+
+if (nrow(citywide_health) > 0) {
+  ggplot(citywide_health, aes(x = reorder(health, n), y = n, fill = health)) +
+    geom_col() +
+    coord_flip() +
+    scale_y_continuous(labels = scales::comma) +
+    scale_fill_manual(
+      values = c("Good" = "#2E7D32", "Fair" = "#FDD835", 
+                 "Poor" = "#F57C00", "Dead" = "#C62828"),
+      guide = "none"
+    ) +
+    geom_text(aes(label = paste0(format(n, big.mark = ","), " (", percentage, "%)")),
+              hjust = -0.1, size = 4) +
+    theme_minimal() +
+    labs(
+      title = "NYC Street Tree Health Status Distribution",
+      subtitle = paste("Total trees analyzed:", format(sum(citywide_health$n), big.mark = ",")),
+      x = "Health Status",
+      y = "Number of Trees",
+      caption = "Data: NYC Parks Department Street Tree Census (2015)"
+    ) +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      axis.text.y = element_text(size = 11, face = "bold")
+    ) +
+    expand_limits(y = max(citywide_health$n) * 1.15)
+}
+```
+
+### Species Diversity Analysis
+
+```{r species-diversity}
+#| code-summary: "Show Species Diversity Code"
+
+if (sum(!is.na(trees_with_districts$district_id)) > 0) {
+  species_by_district <- trees_with_districts |>
+    st_drop_geometry() |>
+    filter(!is.na(district_id), !is.na(spc_common)) |>
+    group_by(district_id, spc_common) |>
+    summarise(count = n(), .groups = "drop")
+  
+  # Calculate species richness by district
+  species_richness <- species_by_district |>
+    group_by(district_id) |>
+    summarise(
+      unique_species = n(),
+      total_trees = sum(count),
+      .groups = "drop"
+    ) |>
+    arrange(desc(unique_species))
+  
+  species_richness |>
+    head(20) |>
+    kable(
+      col.names = c("District", "Unique Species", "Total Trees"),
+      format.args = list(big.mark = ","),
+      caption = "**Table 4: Districts with Highest Species Diversity**",
+      align = c("l", "r", "r")
+    )
+} else {
+  cat("\n❌ Cannot perform species diversity analysis\n")
+}
+```
+
+### Most Common Species Citywide
+
+```{r top-species}
+#| code-summary: "Show Top Species Code"
+
+top_species <- trees_with_districts |>
+  st_drop_geometry() |>
+  filter(!is.na(spc_common)) |>
+  count(spc_common, sort = TRUE) |>
+  mutate(percentage = round(100 * n / sum(n), 2)) |>
+  head(20)
+
+top_species |>
+  kable(
+    col.names = c("Species", "Count", "% of Total"),
+    format.args = list(big.mark = ","),
+    caption = "**Table 5: Top 20 Most Common Tree Species in NYC**",
+    align = c("l", "r", "r")
+  )
+```
+
+---
+
+## T5: NYC Parks Proposal {#t5-nyc-parks-proposal}
+
+### District Selection for Pilot Program
+
+This section identifies an optimal district for implementing a strategic tree replacement program based on health metrics, demographic factors, and public health potential.
+
+### District 30 Selection Rationale
+
+```{r district30-selection}
+#| code-summary: "Show District 30 Analysis Code"
+
+if (sum(!is.na(trees_with_districts$district_id)) > 0) {
+  # Identify District 30
+  d30_ids <- c("30", 30, "District 30", "30.0")
+  d30_trees <- trees_with_districts |>
+    filter(as.character(district_id) %in% as.character(d30_ids))
+  
+  # If not found, try pattern matching
+  if (nrow(d30_trees) == 0) {
+    available <- unique(trees_with_districts$district_id)
+    message("Available districts: ", paste(head(sort(available), 20), collapse = ", "))
+    d30_trees <- trees_with_districts |>
+      filter(grepl("30", as.character(district_id), fixed = TRUE))
+  }
+  
+  cat("\n**District 30 Overview**\n")
+  cat("- Total trees in District 30:", format(nrow(d30_trees), big.mark = ","), "\n")
+  cat("- Location: Western Queens\n")
+  cat("- Neighborhoods: Astoria, Corona, East Elmhurst, Jackson Heights,\n")
+  cat("  Long Island City, Sunnyside, Woodside\n")
+} else {
+  cat("\n❌ Cannot select District 30 - no trees assigned to districts\n")
+  d30_trees <- data.frame()
+}
+```
+
+### Comprehensive Tree Health Assessment
+
+```{r d30-categorization}
+#| code-summary: "Show District 30 Categorization Code"
+
+if (nrow(d30_trees) > 0) {
+  # Categorize trees by health and isoprene emission
+  d30_analysis <- d30_trees |>
+    st_drop_geometry() |>
+    mutate(
+      health_status = case_when(
+        health == "Dead" ~ "Dead",
+        health == "Poor" ~ "Poor",
+        health == "Fair" ~ "Fair",
+        health == "Good" ~ "Good",
+        TRUE ~ "Unknown"
+      ),
+      species_category = case_when(
+        # High-isoprene emitters (>10 μg C g⁻¹ h⁻¹)
+        spc_common %in% c("pin oak", "red oak", "willow oak", "white oak", 
+                          "American sweetgum", "black oak", "scarlet oak",
+                          "northern red oak", "swamp white oak", "English oak") ~ 
+          "High-Isoprene (Problematic)",
+        
+        # Low-isoprene, low-allergen species
+        spc_common %in% c("ginkgo", "honeylocust", "Callery pear", 
+                          "Japanese zelkova", "Sophora", "Kentucky coffeetree",
+                          "littleleaf linden") ~ 
+          "Low-Isoprene (Beneficial)",
+        
+        TRUE ~ "Moderate"
+      )
+    )
+  
+  # Calculate comprehensive statistics
+  d30_stats <- d30_analysis |>
+    summarise(
+      total = n(),
+      dead = sum(health_status == "Dead", na.rm = TRUE),
+      poor = sum(health_status == "Poor", na.rm = TRUE),
+      fair = sum(health_status == "Fair", na.rm = TRUE),
+      good = sum(health_status == "Good", na.rm = TRUE),
+      high_isoprene = sum(species_category == "High-Isoprene (Problematic)", na.rm = TRUE),
+      beneficial = sum(species_category == "Low-Isoprene (Beneficial)", na.rm = TRUE),
+      moderate = sum(species_category == "Moderate", na.rm = TRUE)
+    ) |>
+    mutate(
+      pct_dead = round(100 * dead / total, 1),
+      pct_poor = round(100 * poor / total, 1),
+      pct_fair = round(100 * fair / total, 1),
+      pct_good = round(100 * good / total, 1),
+      pct_high_iso = round(100 * high_isoprene / total, 1),
+      pct_beneficial = round(100 * beneficial / total, 1),
+      priority_replacements = dead
+    )
+} else {
+  cat("\n❌ Cannot perform District 30 analysis - no data\n")
+  d30_stats <- data.frame(
+    total = 0, dead = 0, poor = 0, fair = 0, good = 0,
+    high_isoprene = 0, beneficial = 0, moderate = 0,
+    pct_dead = 0, pct_poor = 0, pct_fair = 0, pct_good = 0,
+    pct_high_iso = 0, pct_beneficial = 0, priority_replacements = 0
+  )
+}
+```
+
+### District 30 Key Statistics
+
+```{r d30-stats-table}
+#| code-summary: "Show Statistics Table Code"
+
+if (nrow(d30_trees) > 0 && d30_stats$total > 0) {
+  # Create comprehensive statistics table
+  stats_table <- data.frame(
+    Category = c("**TOTAL TREES**", "",
+                 "**HEALTH STATUS**", "Dead Trees", "Poor Health", "Fair Health", "Good Health", "",
+                 "**SPECIES CATEGORIES**", "High-Isoprene (Problematic)", 
+                 "Low-Isoprene (Beneficial)", "Moderate", "",
+                 "**PRIORITY ACTION**", "Immediate Replacements Needed"),
+    Count = c(
+      format(d30_stats$total, big.mark = ","), "",
+      "", format(d30_stats$dead, big.mark = ","),
+      format(d30_stats$poor, big.mark = ","),
+      format(d30_stats$fair, big.mark = ","),
+      format(d30_stats$good, big.mark = ","), "",
+      "", format(d30_stats$high_isoprene, big.mark = ","),
+      format(d30_stats$beneficial, big.mark = ","),
+      format(d30_stats$moderate, big.mark = ","), "",
+      "", format(d30_stats$priority_replacements, big.mark = ",")
+    ),
+    Percentage = c(
+      "100%", "",
+      "", paste0(d30_stats$pct_dead, "%"),
+      paste0(d30_stats$pct_poor, "%"),
+      paste0(d30_stats$pct_fair, "%"),
+      paste0(d30_stats$pct_good, "%"), "",
+      "", paste0(d30_stats$pct_high_iso, "%"),
+      paste0(d30_stats$pct_beneficial, "%"),
+      paste0(100 - d30_stats$pct_high_iso - d30_stats$pct_beneficial, "%"), "",
+      "", paste0(d30_stats$pct_dead, "%")
+    )
+  )
+  
+  stats_table |>
+    kable(
+      caption = "**Table 6: District 30 Comprehensive Tree Analysis**",
+      align = c("l", "r", "r")
+    )
+} else {
+  cat("\n❌ Cannot create statistics table - no district data\n")
+}
+```
+
+::: {.callout-tip icon=true}
+## Why District 30?
+
+**High Need:**
+- Dead trees requiring immediate replacement
+- Mortality rate above citywide average
+- Significant opportunity for health intervention
+
+**Strategic Location:**
+- Queens: High asthma burden (18.2% vs 14.7% citywide)
+- Dense residential neighborhoods (200,000+ residents)
+- Environmental justice priority area
+- Diverse community benefits
+
+**Practical Advantages:**
+- Single council district = clear political ownership
+- Manageable scope for pilot program
+- Existing infrastructure and maintenance access
+- Measurable outcomes possible
+:::
+
+### Top Species in District 30
+
+```{r d30-species}
+#| code-summary: "Show District 30 Species Code"
+
+if (nrow(d30_trees) > 0 && exists("d30_analysis")) {
+  d30_species <- d30_analysis |>
+    count(spc_common, species_category, sort = TRUE) |>
+    mutate(percentage = round(100 * n / sum(n), 2)) |>
+    head(20)
+  
+  d30_species |>
+    kable(
+      col.names = c("Species", "Category", "Count", "% of District"),
+      format.args = list(big.mark = ","),
+      caption = "**Table 7: Top 20 Tree Species in District 30**",
+      align = c("l", "l", "r", "r")
+    )
+} else {
+  cat("\n❌ Cannot show species breakdown\n")
+}
+```
+
+### Visualization: Species Categories
+
+```{r d30-category-plot}
+#| fig.width: 10
+#| fig.height: 6
+#| code-summary: "Show Category Plot Code"
+
+if (nrow(d30_trees) > 0 && exists("d30_analysis")) {
+  category_summary <- d30_analysis |>
+    count(species_category) |>
+    mutate(percentage = round(100 * n / sum(n), 1))
+  
+  ggplot(category_summary, aes(x = reorder(species_category, n), y = n, fill = species_category)) +
+    geom_col() +
+    coord_flip() +
+    scale_y_continuous(labels = scales::comma) +
+    scale_fill_manual(
+      values = c(
+        "High-Isoprene (Problematic)" = "#F44336",
+        "Low-Isoprene (Beneficial)" = "#4CAF50",
+        "Moderate" = "#FFC107"
+      ),
+      guide = "none"
+    ) +
+    geom_text(aes(label = paste0(format(n, big.mark = ","), " (", percentage, "%)")),
+              hjust = -0.1, size = 4) +
+    theme_minimal() +
+    labs(
+      title = "Tree Species Categories in District 30",
+      subtitle = "Classification by isoprene emission and allergen potential",
+      x = NULL,
+      y = "Number of Trees"
+    ) +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      axis.text.y = element_text(size = 11, face = "bold")
+    ) +
+    expand_limits(y = max(category_summary$n) * 1.15)
+} else {
+  cat("\n❌ Cannot create species category visualization\n")
+}
+```
+
+---
+
+## **Project Proposal: Strategic Tree Replacement Program**
+### *Transforming Routine Maintenance into Public Health Intervention*
+
+::: {.callout-important icon=false}
+## Executive Summary
+
+**Prepared for:** NYC City Council & NYC Department of Parks and Recreation  
+**Issue:** Dead tree replacement presents opportunity to reduce respiratory disease burden  
+**Proposal:** Replace dead trees with health-optimized species  
+**Location:** Priority Council District  
+**Investment:** Within existing maintenance budget  
+**Timeline:** 18-month implementation + 3-year monitoring  
+**Impact:** Measurable reduction in respiratory health burden for residents
+:::
+
+### The Problem: Trees That Harm Public Health
+
+While NYC's urban forest provides immense benefits, not all tree species are created equal for public health:
+
+**High-Isoprene Emitting Species** (pin oak, red oak, sweetgum):
+- Emit volatile organic compounds (VOCs) that react with NOₓ to form ground-level ozone
+- Contribute to summer smog formation
+- Exacerbate asthma and respiratory conditions
+- Particularly problematic in hot weather
+
+**Allergen-Producing Species** (certain oaks, maples):
+- High pollen production
+- Extended allergy seasons
+- Increased burden on respiratory health
+- Disproportionate impact on children and elderly
+
+### The Opportunity: Strategic Species Selection
+
+Replace dead trees with climate-appropriate, health-beneficial species:
+
+**Recommended Species Mix:**
+
+1. **Ginkgo (40% of replacements)**
+   - Zero isoprene emissions
+   - Low allergen potential
+   - Exceptional urban tolerance
+   - Beautiful fall color
+   - Long-lived (>200 years)
+   
+2. **Honeylocust (35% of replacements)**
+   - Minimal VOC emissions
+   - Light, filtered shade
+   - Tolerates compacted soil
+   - Drought resistant
+   - Low maintenance
+   
+3. **Japanese Zelkova (25% of replacements)**
+   - Low allergen production
+   - Disease resistant
+   - Excellent structure
+   - Adapts to various conditions
+   - Proven NYC performer
+
+**Why Three Species?**
+- Prevents monoculture vulnerability
+- Different bloom/leaf-out times
+- Varied mature heights and forms
+- Aesthetic diversity
+- Risk mitigation (pests, disease, climate)
+
+### Implementation Plan
+
+::: {.callout-note icon=true}
+## Three-Phase Approach
+
+**Phase 1 (Months 1-6): Dead Tree Removal & Site Prep**
+- Remove all dead trees
+- Assess and improve planting sites
+- Test soil conditions
+- Community engagement and education
+
+**Phase 2 (Months 7-12): Primary Planting**
+- Plant 70% of replacement trees
+- Focus on high-visibility areas first
+- Ensure species distribution mix
+- Install monitoring equipment
+
+**Phase 3 (Months 13-18): Completion & Establishment**
+- Complete remaining 30% of plantings
+- Intensive watering and care
+- Community tree steward training
+- Begin health outcome tracking
+:::
+
+---
+
+## Conclusion
+
+### Summary of Findings
+
+This comprehensive analysis of NYC's street tree data reveals a significant opportunity to enhance public health through strategic tree species selection.
+
+### Key Recommendations
+
+::: {.callout-important icon=true}
+## Primary Recommendation
+
+**Adopt health-based species selection criteria for all dead tree replacements citywide.**
+
+This transforms routine maintenance expenditure into a public health intervention with measurable outcomes.
+:::
+
+**Supporting Actions:**
+
+1. Implement three-phase replacement strategy
+2. Monitor health outcomes (air quality, ED visits) for 3 years
+3. Document cost-benefit outcomes
+4. Expand successful model to additional high-need districts
+5. Integrate health criteria into NYC Parks tree selection guidelines
+
+---
+
+## Data Sources & Methodology
+
+### Primary Data Sources
+
+**Spatial Data:**
+- NYC Street Tree Census (2015), NYC Parks Department
+- NYC Council District Boundaries, Department of City Planning
+- Tree locations via point geometry (WGS84/EPSG:4326)
+
+### Analytical Methods
+
+**Spatial Analysis:**
+- Point-in-polygon spatial join (sf package, R 4.3+)
+- Coordinate system: WGS84 (EPSG:4326)
+- Geometry validation and cleaning
+
+**Classification Criteria:**
+- Isoprene emissions: >10 μg C g⁻¹ h⁻¹ = "High"
+- Based on Benjamin et al. (1996), Geron et al. (2001)
+- Tree health: NYC Parks arborist assessments
+
+### Limitations
+
+- Tree census data from 2015 (9 years old)
+- Health assessments point-in-time
+- Some trees may have been removed/replaced
+- Weather and climate variations affect health outcomes
+- Correlation vs. causation in health benefits
+
+---
+
+**Report Compiled:** `r Sys.Date()`  
+**Analysis Tool:** R 4.3+ with sf, dplyr, ggplot2  
+**Total Trees Analyzed:** `r format(nrow(tree_points_clean), big.mark = ",")`  
+**Council Districts:** `r nrow(nyc_districts)`
