@@ -1,0 +1,1986 @@
+---
+title: "Mini-Project 04 - Just the Fact(-Check)s"
+author: "Swarnadeep Roy"
+editor:
+    mode: source
+format:
+    html:
+        code-fold: true
+        code-summary: "Show code"
+        theme: cosmo
+        toc: true
+        toc-location: left
+        toc-depth: 3
+        smooth-scroll: true
+        max-width: 1400px
+        embed-resources: true
+---
+
+```{=html}
+<style>
+/* Enhanced Modern Styling */
+:root {
+  --primary-color: #2C3E50;
+  --secondary-color: #3498DB;
+  --accent-color: #E74C3C;
+  --success-color: #27AE60;
+  --warning-color: #F39C12;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.8;
+  color: #2c3e50;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-top: 2rem;
+}
+
+h1 {
+  border-bottom: 4px solid var(--secondary-color);
+  padding-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+h2 {
+  border-left: 5px solid var(--accent-color);
+  padding-left: 1rem;
+  margin-top: 3rem;
+}
+
+h3 {
+  color: var(--secondary-color);
+  border-bottom: 2px dashed #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.callout {
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.callout:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+}
+
+.callout-note {
+  background-color: #E8F4FD;
+  border-left: 5px solid #3498DB;
+}
+
+.callout-note, .callout-note p, .callout-note li {
+  color: #1e3a5f !important;
+}
+
+.callout-note h2, .callout-note h3, .callout-note h4 {
+  color: #2C3E50 !important;
+  border-bottom: 2px solid #3498DB !important;
+  padding-bottom: 0.5rem;
+}
+
+.callout-important {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border-left: 5px solid #fff;
+}
+
+table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin: 2rem auto;
+}
+
+thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+pre {
+  border-radius: 8px;
+  border-left: 4px solid var(--secondary-color);
+  background: #f8f9fa;
+  padding: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.article-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.article-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+}
+
+.verdict-box {
+  border-radius: 15px;
+  padding: 2rem;
+  margin: 2rem 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  font-weight: 600;
+}
+
+img {
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+  max-width: 100%;
+  height: auto;
+}
+
+img:hover {
+  transform: scale(1.02);
+}
+
+hr {
+  border: none;
+  height: 3px;
+  background: linear-gradient(to right, transparent, var(--secondary-color), transparent);
+  margin: 3rem 0;
+}
+
+.claim-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  border-radius: 15px;
+  color: white;
+  margin: 2rem 0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.claim-box h3 {
+  color: white !important;
+  border: none;
+  margin-top: 0;
+}
+
+.claim-box p {
+  font-size: 1.05em;
+  line-height: 1.6;
+}
+</style>
+```
+
+![](https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&h=300&fit=crop)
+
+## 📊 Introduction
+
+This project aims to perform a "fact check" to various claims related to the Bureau of Labor Statistics monthly "job number." The firing of BLS Commissioner Dr. Erika McEntarfer in August 2025 sparked intense debate about the accuracy and reliability of employment data.
+
+::: {.callout-note icon=false}
+## 📋 Project Description
+
+**From the [STA 9750 Course Assignment Page](https://michael-weylandt.com/STA9750/miniprojects/mini04.html):**
+
+> *"On August 1st, 2025, President Donald Trump announced in a post on Truth Social that he was instructing his staff to fire Dr. Erika McEntarfer, the Commissioner of Labor Statistics. As the head of the Bureau of Labor Statistics, Dr. McEntarfer had responsibility for all of the BLS's statistical programs and reporting. None of these reports is more closely watched than the BLS's Monthly Current Employment Statistics (CES), colloquially known as the "jobs number". ... The sudden dismissal of Dr. McEntarfer was quickly and emphatically criticized by economists from both left- and right-of center who worried that even the appearance of politicization would permanently create doubt in the quality of BLS's work. Defenders of the President's actions pointed to the size and direction of recent revisions to CES numbers as a cause for concern. Supporters of BLS and Dr. McEntarer concede that BLS and CES face non-trivial challenges but deny any political valence to these challenges. ...* 
+
+***For this mini-project, you will evaluate the veracity of these competing claims about the accuracy of BLS reports in the form of a political "fact check." That is, you will find a claim made by a public figure and see whether the data supports, refutes, or - most likely - is only partially consistent with that claim."***
+
+**Key Questions Examined:**
+- Were recent revisions truly "unprecedented"?
+- Is there evidence of systematic bias in BLS reporting?
+- How do 2024-2025 revisions compare to 45 years of historical patterns?
+
+:::
+
+
+**Below are four key articles examining this controversy:**
+
+```{=html}
+<style>
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin: 30px auto;
+  max-width: 1200px;
+}
+.article-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: box-shadow 0.3s;
+  background-color: #fff;
+}
+.article-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.article-image {
+  width: 100%;
+  height: 120px;
+  border-radius: 5px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+.article-card a {
+  text-decoration: none;
+}
+.article-title {
+  font-weight: bold;
+  color: #2c5aa0;
+  text-decoration: none;
+  font-size: 0.85em;
+  display: block;
+  margin: 8px 0;
+  min-height: 35px;
+}
+.article-title:hover {
+  text-decoration: underline;
+}
+.article-source {
+  color: #666;
+  font-size: 0.75em;
+}
+</style>
+
+<div class="article-grid">
+
+  <div class="article-card">
+    <a href="https://www.piie.com/blogs/realtime-economics/2025/bls-investigation-challenges-yes-rigged-data-no" target="_blank">
+      <div class="article-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        Peterson Institute
+      </div>
+      <div class="article-title">BLS investigation: Challenges yes, rigged data no</div>
+    </a>
+    <div class="article-source">Peterson Institute • August 2025</div>
+  </div>
+
+  <div class="article-card">
+    <a href="https://www.nytimes.com/2025/08/06/business/economy/trump-jobs-data-revisions-bls.html" target="_blank">
+      <div class="article-image" style="background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);">
+        New York Times
+      </div>
+      <div class="article-title">Trump jobs data revisions and BLS controversy</div>
+    </a>
+    <div class="article-source">New York Times • August 6, 2025</div>
+  </div>
+
+  <div class="article-card">
+    <a href="https://www.axios.com/2025/08/01/jobs-report-july-2025-revisions" target="_blank">
+      <div class="article-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        Axios
+      </div>
+      <div class="article-title">Jobs report: July 2025 revisions explained</div>
+    </a>
+    <div class="article-source">Axios • August 1, 2025</div>
+  </div>
+
+  <div class="article-card">
+    <a href="https://www.nbcnews.com/business/economy/bls-data-explainer-what-to-know-rcna222570" target="_blank">
+      <div class="article-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        NBC News
+      </div>
+      <div class="article-title">BLS data explainer: What to know about revisions</div>
+    </a>
+    <div class="article-source">NBC News • August 2025</div>
+  </div>
+
+</div>
+```
+
+::: {.callout-important icon=false}
+## 🗺️ Report Structure
+
+**Project Set Up Part 1:** [Jump to Data Acquisiition →](#data-aquisition)
+
+**Project Set Up Part 2:** [Jump to Data Integration and Exploration →](#t3-data-integration-and-exploration)
+
+**Analysis:** [Jump to Statistical Analysis →](#t4-statistical-analysis)
+
+**Final Deliverable:** [Jump to Fact Checks →](#t5-fact-check-of-claims-about-bls)
+
+:::
+
+---
+
+## 📥 Data Acquisition
+
+This analysis uses 45 years of Bureau of Labor Statistics employment data (1979-2025) to fact-check specific claims about CES revisions.
+
+#### *T1: BLS CES Data*
+
+```{r}
+#| label: load-packages
+#| code-summary: "Show Library Download Code"
+#| message: false
+#| warning: false
+
+# Load required packages
+library(httr2)
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(scales)
+library(knitr)
+library(kableExtra)
+library(infer)
+```
+
+```{r}
+#| label: setup-theme
+#| code-summary: "Show Custom Theme Setup"
+#| warning: false
+#| message: false
+
+# Custom theme for all plots
+custom_theme <- function() {
+  theme_minimal(base_size = 14) +
+    theme(
+      plot.title = element_text(face = "bold", size = 16, hjust = 0.5, color = "#2C3E50"),
+      plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#7F8C8D", margin = margin(b = 20)),
+      plot.caption = element_text(size = 9, color = "#95A5A6", hjust = 0),
+      plot.background = element_rect(fill = "white", color = NA),
+      panel.background = element_rect(fill = "#F8F9FA", color = NA),
+      panel.grid.major = element_line(color = "#BDC3C7", size = 0.3),
+      panel.grid.minor = element_blank(),
+      axis.title = element_text(size = 12, face = "bold", color = "#34495E"),
+      axis.text = element_text(size = 10, color = "#7F8C8D"),
+      legend.position = "bottom",
+      legend.title = element_text(face = "bold", size = 11),
+      legend.text = element_text(size = 10),
+      legend.background = element_rect(fill = "white", color = "#BDC3C7"),
+      plot.margin = margin(20, 20, 20, 20)
+    )
+}
+
+# Color palettes
+colors_positive_negative <- c("Positive" = "#27AE60", "Negative" = "#E74C3C")
+colors_period <- c("Post-2020" = "#E74C3C", "Pre-2020" = "#3498DB")
+colors_mcentarfer <- c("McEntarfer Era" = "#E74C3C", "Historical" = "#95A5A6")
+```
+
+```{r}
+#| label: download-ces-data
+#| code-summary: "Show CES Download Code"
+#| output: false
+#| warning: false
+#| message: false
+
+# Task 1: Download Final CES Estimates
+# Total Nonfarm Employment (Seasonally Adjusted) from January 1979 to June 2025
+
+# Step 1: Create HTTP request to BLS data portal
+ces_request <- request("https://data.bls.gov/pdq/SurveyOutputServlet") |>
+  req_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36") |>
+  req_body_form(
+    series_id = "CES0000000001",
+    years_option = "specific_years",
+    to_year = "2025",
+    from_year = "1979",
+    periods_option = "specific_periods",
+    periods = "M01",
+    periods = "M02",
+    periods = "M03",
+    periods = "M04",
+    periods = "M05",
+    periods = "M06",
+    periods = "M07",
+    periods = "M08",
+    periods = "M09",
+    periods = "M10",
+    periods = "M11",
+    periods = "M12"
+  )
+
+# Step 2: Perform the request
+ces_response <- ces_request |> req_perform()
+
+# Step 3: Extract and parse the HTML - get ALL tables
+html_content <- ces_response |> resp_body_html()
+all_tables <- html_content |> html_elements("table")
+
+# The data table is typically the second or third table
+ces_data <- all_tables[[2]] |> html_table()
+
+# Step 4: Clean and pivot the data
+ces_final <- ces_data |>
+  pivot_longer(cols = -Year, names_to = "month", values_to = "level") |>
+  mutate(
+    date = ym(paste(Year, month)),
+    level = as.numeric(str_remove_all(level, ","))
+  ) |>
+  select(date, level) |>
+  drop_na()
+```
+---
+
+#### *T2: CES Revisions Data*
+```{r}
+#| label: extract-revisions-final
+#| code-summary: "Show Revisions Download Code"
+#| output: false
+#| warning: false
+#| message: false
+
+# Make the request
+revisions_request <- request("https://www.bls.gov/web/empsit/cesnaicsrev.htm") |>
+  req_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36") |>
+  req_headers(
+    Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    `Accept-Language` = "en-US,en;q=0.5"
+  )
+
+revisions_response <- revisions_request |> req_perform()
+revisions_html <- revisions_response |> resp_body_html()
+all_tables <- revisions_html |> html_elements("table")
+
+# Get the big table (index 4)
+revisions_raw <- all_tables[[4]] |> html_table(header = FALSE)
+
+# Clean and process the data
+revisions_final <- revisions_raw |>
+  # Filter to only rows that start with month abbreviations (Jan, Feb, etc.)
+  filter(str_detect(X1, "^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\.")) |>
+  # Select relevant columns: Month (X1), Year (X2), and revision columns
+  # Based on the structure, X4 appears to be "2nd-1st" (original) and X5 is "3rd-2nd" (final)
+  select(month = X1, year = X2, original = X4, final = X5) |>
+  # Clean up the data
+  mutate(
+    # Remove periods from month names
+    month = str_remove(month, "\\."),
+    # Parse year
+    year = as.numeric(year),
+    # Create date
+    date = ym(paste(year, month)),
+    # Convert original and final to numeric (removing commas and handling "")
+    original = as.numeric(str_remove_all(original, ",")),
+    final = as.numeric(str_remove_all(final, ",")),
+    # Calculate revision
+    revision = final - original
+  ) |>
+  # Select final columns
+  select(date, original, final, revision) |>
+  # Remove any rows with missing dates
+  drop_na(date) |>
+  # Filter to only 1979-2025
+  filter(year(date) >= 1979, year(date) <= 2025)
+```
+---
+
+## 🔍 T3: Data Integration and Exploration
+
+#### *Joining the Datasets*
+
+To analyze the relationship between employment levels and revisions, the two datasets from Tasks 1 and 2 were combined.
+
+```{r}
+#| label: join-data
+#| code-summary: "Show Join Code"
+#| output: false
+#| warning: false
+#| message: false
+
+# Join the two datasets
+ces_combined <- ces_final |>
+  left_join(revisions_final, by = "date") |>
+  mutate(
+    # Calculate the change in employment from previous month
+    level_change = level - lag(level),
+    # Calculate revision as percentage of final level
+    revision_pct = (revision / final) * 100,
+    # Calculate absolute revision percentage
+    abs_revision_pct = abs(revision_pct),
+    # Add year and month for grouping
+    year = year(date),
+    month = month(date, label = TRUE),
+    # Add decade
+    decade = floor(year / 10) * 10
+  )
+```
+
+
+After successfully joining the tables, descriptive statistics were examined to develop a deeper understanding of the data. 
+
+```{r}
+#| label: compute-statistics
+#| code-summary: "Show Statistics Table Code"
+#| message: false
+#| warning: false
+
+# Statistic 1 & 2: Largest positive and negative revisions
+extreme_revisions <- ces_combined |>
+  filter(!is.na(revision)) |>
+  arrange(desc(revision)) |>
+  slice(c(1, n())) |>
+  select(Date = date, `Revision (thousands)` = revision, `Employment Level` = level) |>
+  mutate(Type = c("Largest Positive", "Largest Negative"))
+
+extreme_revisions |>
+  kable(caption = "Largest Positive and Negative Revisions",
+        digits = 0,
+        format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE,
+                position = "left") |>
+  row_spec(0, bold = TRUE, color = "white", background = "#4472C4")
+
+# Statistic 3: Average absolute revision by decade
+avg_revision_by_decade <- ces_combined |>
+  filter(!is.na(revision)) |>
+  group_by(Decade = decade) |>
+  summarize(
+    `Avg Absolute Revision` = mean(abs(revision), na.rm = TRUE),
+    `Median Absolute Revision` = median(abs(revision), na.rm = TRUE),
+    `Number of Months` = n()
+  ) |>
+  arrange(Decade)
+
+avg_revision_by_decade |>
+  kable(caption = "Average Absolute Revision by Decade",
+        digits = 1) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#70AD47") |>
+  column_spec(1, bold = TRUE)
+
+# Statistic 4: Fraction of positive vs negative revisions
+revision_direction <- ces_combined |>
+  filter(!is.na(revision)) |>
+  summarize(
+    `Total Revisions` = n(),
+    `Positive` = sum(revision > 0, na.rm = TRUE),
+    `Negative` = sum(revision < 0, na.rm = TRUE),
+    `Zero` = sum(revision == 0, na.rm = TRUE),
+    `% Positive` = (Positive / `Total Revisions`) * 100,
+    `% Negative` = (Negative / `Total Revisions`) * 100
+  )
+
+revision_direction |>
+  kable(caption = "Revision Direction Summary",
+        digits = 1) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#ED7D31")
+
+# Statistic 6: Which months have largest revisions?
+avg_revision_by_month <- ces_combined |>
+  filter(!is.na(revision)) |>
+  group_by(Month = month) |>
+  summarize(
+    `Avg Abs Revision` = mean(abs(revision), na.rm = TRUE),
+    `Median Abs Revision` = median(abs(revision), na.rm = TRUE),
+    `Count` = n()
+  ) |>
+  arrange(desc(`Avg Abs Revision`))
+
+avg_revision_by_month |>
+  kable(caption = "Average Absolute Revision by Month",
+        digits = 1) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  row_spec(1, bold = TRUE, background = "#FFF2CC")
+
+# Statistic 7: Recent years summary
+recent_revisions <- ces_combined |>
+  filter(year >= 2020, !is.na(revision)) |>
+  summarize(
+    `Avg Revision` = mean(revision, na.rm = TRUE),
+    `Avg Abs Revision` = mean(abs(revision), na.rm = TRUE),
+    `Max Revision` = max(revision, na.rm = TRUE),
+    `Min Revision` = min(revision, na.rm = TRUE),
+    `% Positive` = sum(revision > 0) / n() * 100
+  )
+
+recent_revisions |>
+  kable(caption = "Recent Years (2020-2025) Revision Summary",
+        digits = 1) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#A5A5A5")
+```
+
+---
+
+#### *Data Visualizations*
+
+Several visualizations were created to explore trends in CES estimates and revisions over time.
+
+**Visualization #1**: This chart illustrates the long-term growth trajectory of U.S. employment over 46 years, expanding from 89 million to 159 million jobs. The data reveals three major economic disruptions: the early 1990s recession, the 2008-2009 Great Recession, and the 2020 pandemic. Employment then rebounded significantly in subsequent years.
+
+```{r}
+#| label: visualization-1
+#| code-summary: "Show Visualization Code"
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+# Visualization 1: Employment level over time
+ggplot(ces_combined, aes(x = date, y = level)) +
+  geom_line(color = "#3498DB", linewidth = 1.2) +
+  geom_area(fill = "#3498DB", alpha = 0.2) +
+  scale_y_continuous(labels = comma) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(
+    title = "Total Nonfarm Employment (Seasonally Adjusted)",
+    subtitle = "January 1979 - June 2025 | 46 Years of U.S. Employment Data",
+    x = NULL,
+    y = "Employment Level (thousands)",
+    caption = "Source: Bureau of Labor Statistics, Current Employment Statistics"
+  ) +
+  custom_theme()
+```
+
+---
+
+**Visualization #2**: The chart reveals that employment revisions occur in both upward (green) and downward (red) directions. The largest revisions coincide with economic disruptions like the 2008 financial crisis and 2020 pandemic. No sustained pattern of exclusively positive or negative revisions is evident.
+
+```{r}
+#| label: visualization-2
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+# Visualization 2: Revisions over time (FIXED LEGEND)
+ggplot(ces_combined |> filter(!is.na(revision)), 
+       aes(x = date, y = revision)) +
+  geom_col(aes(fill = ifelse(revision > 0, "Positive", "Negative")), 
+           alpha = 0.8, width = 30) +
+  geom_hline(yintercept = 0, linetype = "solid", color = "#2C3E50", size = 1) +
+  scale_fill_manual(
+    values = colors_positive_negative,
+    name = "Revision Direction"
+  ) +
+  scale_y_continuous(labels = comma) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(
+    title = "CES Employment Revisions Over Time",
+    subtitle = "Difference between final (3rd) and original (1st) estimates | 1979-2025",
+    x = NULL,
+    y = "Revision (thousands of jobs)",
+    caption = "Source: Bureau of Labor Statistics, Current Employment Statistics"
+  ) +
+  custom_theme() +
+  theme(
+    panel.grid.major.x = element_blank()
+  )
+```
+
+---
+
+**Visualization #3**: This chart shows that revisions as a percentage of total employment have remained relatively stable over time. Once again, the largest outliers occur during periods of economic turbulence. The blue trend line indicates no sustained increase in revision magnitude relative to workforce size. This suggests consistent accuracy over the 46-year period.
+
+```{r}
+#| label: visualization-3
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+# Create the data needed for this plot
+avg_revision_pct_by_year <- ces_combined |>
+  filter(!is.na(abs_revision_pct)) |>
+  group_by(year) |>
+  summarize(
+    avg_abs_rev_pct = mean(abs_revision_pct, na.rm = TRUE),
+    median_abs_rev_pct = median(abs_revision_pct, na.rm = TRUE)
+  )
+
+# Visualization 3: Absolute revision percentage over time
+ggplot(avg_revision_pct_by_year |> filter(!is.na(avg_abs_rev_pct)), 
+       aes(x = year, y = avg_abs_rev_pct)) +
+  geom_line(color = "#F39C12", linewidth = 1.5) +
+  geom_point(color = "#F39C12", size = 2, alpha = 0.6) +
+  geom_smooth(method = "loess", se = TRUE, alpha = 0.2, color = "#3498DB", fill = "#3498DB") +
+  labs(
+    title = "Average Absolute Revision as Percentage of Employment",
+    subtitle = "Has revision accuracy improved over time? | Trend line shows no sustained change",
+    x = "Year",
+    y = "Average Absolute Revision (% of final employment level)",
+    caption = "Source: Bureau of Labor Statistics. Blue band shows smoothed trend with 95% confidence interval."
+  ) +
+  custom_theme()
+```
+
+---
+
+**Visualization #4**: This chart shows that employment revisions are generally evenly split between positive and negative adjustments, with most revisions clustered near zero (±50,000 jobs). This indicates no clear systematic bias toward either upward or downward revisions over time.
+
+```{r}
+#| label: visualization-4
+#| warning: false
+#| message: false
+#| fig-width: 12
+#| fig-height: 7
+
+# Visualization 4: Distribution of revisions
+ggplot(ces_combined |> filter(!is.na(revision)), 
+       aes(x = revision)) +
+  geom_histogram(bins = 50, fill = "#3498DB", alpha = 0.7, color = "white") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "#E74C3C", size = 1.5) +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Distribution of CES Employment Revisions",
+    subtitle = "1979-2025 | Most revisions cluster near zero, indicating no systematic bias",
+    x = "Revision (thousands of jobs)",
+    y = "Frequency (number of months)",
+    caption = "Source: Bureau of Labor Statistics. Red dashed line indicates zero revision."
+  ) +
+  custom_theme()
+```
+
+---
+
+**Visualization #5**: This boxplot shows that the magnitude of revisions has remained relatively consistent across decades. The median revisions (dark horizontal lines) are near zero in all periods and similar spreads of positive and negative revisions. The 2020s do not exhibit unusually large revisions compared to historical patterns, contradicting claims that recent revisions are unprecedented.
+
+```{r}
+#| label: visualization-5
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+# Visualization 5: Boxplot of revisions by decade
+ggplot(ces_combined |> filter(!is.na(revision), !is.na(decade)), 
+       aes(x = factor(decade), y = revision)) +
+  geom_boxplot(fill = "#3498DB", alpha = 0.6, outlier.color = "#E74C3C", outlier.size = 2) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "#E74C3C", size = 1) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title = "Distribution of CES Revisions by Decade",
+    subtitle = "Are revisions getting larger or smaller over time? | Relatively consistent patterns across decades",
+    x = "Decade",
+    y = "Revision (thousands of jobs)",
+    caption = "Source: Bureau of Labor Statistics. Box shows 25th-75th percentile, line shows median."
+  ) +
+  custom_theme()
+```
+
+---
+
+**Visualization #6**: The percentage of positive revisions fluctuates around the 50% threshold throughout the entire time period. There is not a sustained pattern of systematic upward or downward bias.
+
+```{r}
+#| label: visualization-6
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+# Create the data for this plot
+revision_summary_by_year <- ces_combined |>
+  filter(!is.na(revision)) |>
+  group_by(year) |>
+  summarize(
+    pct_positive = sum(revision > 0) / n() * 100,
+    pct_negative = sum(revision < 0) / n() * 100,
+    count = n()
+  )
+
+# Visualization 6: Positive vs negative revisions over time
+ggplot(revision_summary_by_year, aes(x = year, y = pct_positive)) +
+  geom_line(color = "#27AE60", linewidth = 1.5) +
+  geom_point(color = "#27AE60", size = 3, alpha = 0.6) +
+  geom_hline(yintercept = 50, linetype = "dashed", color = "#95A5A6", linewidth = 1.5) +
+  geom_ribbon(aes(ymin = 45, ymax = 55), alpha = 0.1, fill = "#95A5A6") +
+  scale_y_continuous(limits = c(0, 100)) +
+  labs(
+    title = "Percentage of Positive Revisions by Year",
+    subtitle = "Are revisions systematically biased upward or downward? | Fluctuates around 50% (no bias)",
+    x = "Year",
+    y = "% Positive Revisions",
+    caption = "Source: Bureau of Labor Statistics. Dashed line at 50% indicates no bias. Gray band shows ±5% range."
+  ) +
+  custom_theme()
+```
+
+---
+
+## 📊 T4: Statistical Analysis
+
+To evaluate claims about CES revision accuracy and patterns, several statistical hypothesis tests were conducted using the `infer` package and base R functions. These tests help determine if observed patterns in the data are statistically significant.
+
+```{r}
+#| label: prepare-test-data
+#| code-summary: "Show Data Preparation Code"
+#| output: false
+#| message: false
+#| warning: false
+
+# Add grouping variables for hypothesis tests
+ces_test_data <- ces_combined |>
+  filter(!is.na(revision)) |>
+  mutate(
+    # Time period groupings
+    post_2020 = year >= 2020,
+    post_2000 = year >= 2000,
+    
+    # Revision characteristics
+    is_negative = revision < 0,
+    is_positive = revision > 0,
+    is_large = abs(revision) > median(abs(revision), na.rm = TRUE),
+    large_revision_pct = abs_revision_pct > 1,
+    
+    # Convert to character for infer package (required)
+    post_2020_char = if_else(post_2020, "Post-2020", "Pre-2020"),
+    post_2000_char = if_else(post_2000, "Post-2000", "Pre-2000")
+  )
+```
+
+#### *Test 1: Average Revision Magnitude - Post-2020 vs Pre-2020*
+
+Critics claim that revisions increased in recent years. This test looks at whether the average absolute revision is significantly different in the post-2020 period compared to earlier years.
+
+```{r}
+#| label: test-1-average-revision
+#| code-summary: "Show Test 1 Code"
+#| message: false
+#| warning: false
+
+# Two-sample t-test: Is average absolute revision larger post-2020?
+test1_result <- ces_test_data |>
+  mutate(abs_revision = abs(revision)) |>
+  t_test(
+    abs_revision ~ post_2020_char,
+    order = c("Post-2020", "Pre-2020"),
+    alternative = "two.sided"
+  )
+
+# Calculate descriptive statistics
+test1_descriptive <- ces_test_data |>
+  mutate(abs_revision = abs(revision)) |>
+  group_by(post_2020_char) |>
+  summarize(
+    N = n(),
+    Mean = mean(abs_revision, na.rm = TRUE),
+    Median = median(abs_revision, na.rm = TRUE),
+    SD = sd(abs_revision, na.rm = TRUE)
+  )
+
+# Combine test results with descriptives
+test1_display <- test1_result |>
+  select(`Test Statistic` = statistic, 
+         `P-value` = p_value, 
+         `Estimated Difference` = estimate,
+         `95% CI Lower` = lower_ci,
+         `95% CI Upper` = upper_ci)
+
+test1_display |>
+  kable(caption = "Test 1: Two-Sample t-test - Average Absolute Revision Post-2020 vs Pre-2020",
+        digits = 3) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#4472C4")
+
+test1_descriptive |>
+  kable(caption = "Descriptive Statistics by Period",
+        digits = 2,
+        col.names = c("Period", "N", "Mean", "Median", "Std Dev")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#4472C4")
+```
+
+
+**Interpretation:** The average absolute revision post-2020 is `r round(test1_descriptive$Mean[test1_descriptive$post_2020_char == "Post-2020"], 1)`K jobs compared to `r round(test1_descriptive$Mean[test1_descriptive$post_2020_char == "Pre-2020"], 1)`K jobs pre-2020, a difference of `r round(test1_result$estimate, 1)`K jobs. With a p-value of `r round(test1_result$p_value, 3)`, we `r ifelse(test1_result$p_value < 0.05, "**reject**", "**fail to reject**")` the null hypothesis at the 5% significance level. 
+
+There is `r ifelse(test1_result$p_value < 0.05, "**statistically significant**", "**no statistically significant**")` evidence that average revisions differ between these periods.
+
+---
+
+#### *Test 2: Proportion of Negative Revisions - Post-2000 vs Pre-2000*
+
+Some claim that revisions have become systematically biased in one direction. This test looks at whether the proportion of negative revisions has changed since 2000.
+
+```{r}
+#| label: test-2-negative-revisions
+#| code-summary: "Show Test 2 Code"
+#| message: false
+#| warning: false
+
+# Proportion test: Is the fraction of negative revisions different post-2000?
+test2_result <- ces_test_data |>
+  prop_test(
+    is_negative ~ post_2000_char,
+    order = c("Post-2000", "Pre-2000"),
+    alternative = "two.sided"
+  )
+
+# Calculate actual proportions
+test2_proportions <- ces_test_data |>
+  group_by(post_2000_char) |>
+  summarize(
+    N = n(),
+    Negative = sum(is_negative),
+    Positive = sum(is_positive),
+    `% Negative` = (sum(is_negative) / n()) * 100,
+    `% Positive` = (sum(is_positive) / n()) * 100
+  )
+
+# Format test results
+test2_display <- test2_result |>
+  select(`Test Statistic` = statistic,
+         `P-value` = p_value,
+         `95% CI Lower` = lower_ci,
+         `95% CI Upper` = upper_ci)
+
+test2_display |>
+  kable(caption = "Test 2: Proportion Test - Negative Revisions Post-2000 vs Pre-2000",
+        digits = 3) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#70AD47")
+
+test2_proportions |>
+  kable(caption = "Revision Direction by Period",
+        digits = 1,
+        col.names = c("Period", "N", "Negative", "Positive", "% Negative", "% Positive")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#70AD47")
+```
+
+
+**Interpretation:** Post-2000, `r round(test2_proportions$"% Negative"[test2_proportions$post_2000_char == "Post-2000"], 1)`% of revisions were negative compared to `r round(test2_proportions$"% Negative"[test2_proportions$post_2000_char == "Pre-2000"], 1)`% pre-2000. With a p-value of `r round(test2_result$p_value, 3)`, we `r ifelse(test2_result$p_value < 0.05, "**reject**", "**fail to reject**")` the null hypothesis at the 5% significance level. 
+
+There is `r ifelse(test2_result$p_value < 0.05, "**statistically significant**", "**no statistically significant**")` evidence of a change in the proportion of negative revisions.
+
+---
+
+#### *Test 3: Large Revisions (>1% of Employment) - Recent vs Historical*
+
+A common criticism is that large revisions (as a percentage of total employment) have become more frequent. This test looks at whether revisions exceeding 1% of the employment level are more common post-2020.
+
+```{r}
+#| label: test-3-large-revisions
+#| code-summary: "Show Test 3 Code"
+#| message: false
+#| warning: false
+
+# Proportion test: Are large revisions (>1%) more common post-2020?
+test3_result <- ces_test_data |>
+  filter(!is.na(large_revision_pct)) |>
+  prop_test(
+    large_revision_pct ~ post_2020_char,
+    order = c("Post-2020", "Pre-2020"),
+    alternative = "greater"
+  )
+
+# Calculate actual proportions
+test3_proportions <- ces_test_data |>
+  filter(!is.na(large_revision_pct)) |>
+  group_by(post_2020_char) |>
+  summarize(
+    N = n(),
+    `Large Revisions (>1%)` = sum(large_revision_pct),
+    `% Large` = (sum(large_revision_pct) / n()) * 100
+  )
+
+# Format test results
+test3_display <- test3_result |>
+  select(`Test Statistic` = statistic,
+         `P-value` = p_value,
+         `Lower 95% CI` = lower_ci)
+
+test3_display |>
+  kable(caption = "Test 3: One-Sided Proportion Test - Large Revisions Post-2020 vs Pre-2020",
+        digits = 3) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#ED7D31")
+
+test3_proportions |>
+  kable(caption = "Frequency of Large Revisions by Period",
+        digits = 1,
+        col.names = c("Period", "N", "Large Revisions", "% Large")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#ED7D31")
+```
+
+
+**Interpretation:** Post-2020, `r round(test3_proportions$"% Large"[test3_proportions$post_2020_char == "Post-2020"], 1)`% of revisions exceeded 1% of employment compared to `r round(test3_proportions$"% Large"[test3_proportions$post_2020_char == "Pre-2020"], 1)`% pre-2020. In this one-sided test (testing if post-2020 is *greater*), the p-value is `r round(test3_result$p_value, 3)`. We `r ifelse(test3_result$p_value < 0.05, "**reject**", "**fail to reject**")` the null hypothesis.
+
+There is `r ifelse(test3_result$p_value < 0.05, "**statistically significant**", "**no statistically significant**")` evidence that large revisions are more common in recent years.
+
+---
+
+#### *Test 4: Systematic Bias in Revisions - Is Average Revision Zero?*
+
+If BLS estimates are unbiased, the average revision across all years should be approximately zero. This means that the positive and negative revisions should cancel each other out. This test looks at whether the overall average revision is significantly different from zero.
+
+```{r}
+#| label: test-4-systematic-bias
+#| code-summary: "Show Test 4 Code"
+#| message: false
+#| warning: false
+
+# One-sample t-test: Is the average revision significantly different from zero?
+test4_result <- t.test(ces_test_data$revision, mu = 0, alternative = "two.sided")
+
+# Create formatted results table
+test4_display <- data.frame(
+  `Mean Revision` = mean(ces_test_data$revision, na.rm = TRUE),
+  `t-statistic` = test4_result$statistic,
+  `P-value` = test4_result$p.value,
+  `95% CI Lower` = test4_result$conf.int[1],
+  `95% CI Upper` = test4_result$conf.int[2]
+)
+
+test4_display |>
+  kable(caption = "Test 4: One-Sample t-test - Average Revision vs Zero (Testing for Bias)",
+        digits = 3,
+        col.names = c("Mean Revision", "t-statistic", "P-value", "95% CI Lower", "95% CI Upper")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5")
+
+# Additional context
+overall_stats <- ces_test_data |>
+  summarize(
+    N = n(),
+    `Mean Revision` = mean(revision),
+    `Median Revision` = median(revision),
+    `Positive Revisions` = sum(revision > 0),
+    `Negative Revisions` = sum(revision < 0),
+    `% Positive` = (sum(revision > 0) / n()) * 100
+  )
+
+overall_stats |>
+  kable(caption = "Overall Revision Statistics (All Years)",
+        digits = 2) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5")
+```
+
+
+**Interpretation:** The mean revision across all years is `r round(mean(ces_test_data$revision), 2)`K jobs with a p-value of `r format.pval(test4_result$p.value, digits = 3)`. We `r ifelse(test4_result$p.value < 0.05, "**reject**", "**fail to reject**")` the null hypothesis that the mean is zero. 
+
+This `r ifelse(test4_result$p.value < 0.05, "suggests", "does not suggest")` systematic bias in BLS initial estimates. `r if(test4_result$p.value < 0.05 && mean(ces_test_data$revision) > 0) {"Initial estimates tend to systematically **underestimate** employment (upward revisions)."} else if(test4_result$p.value < 0.05 && mean(ces_test_data$revision) < 0) {"Initial estimates tend to systematically **overestimate** employment (downward revisions)."} else {"There is no clear directional bias."}`
+
+---
+
+#### **Summary of Statistical Tests**
+
+```{r}
+#| label: test-summary-table
+#| code-summary: "Show Summary Code"
+#| message: false
+#| warning: false
+
+# Create comprehensive summary table
+test_summary <- data.frame(
+  Test = c(
+    "Average Revision: Post-2020 vs Pre-2020",
+    "Proportion Negative: Post-2000 vs Pre-2000",
+    "Large Revisions (>1%): Post-2020 vs Pre-2020",
+    "Systematic Bias: Mean vs Zero"
+  ),
+  `Test Type` = c(
+    "Two-sample t-test",
+    "Two-proportion test",
+    "One-sided proportion test",
+    "One-sample t-test"
+  ),
+  `Test Statistic` = c(
+    round(test1_result$statistic, 3),
+    round(test2_result$statistic, 3),
+    round(test3_result$statistic, 3),
+    round(test4_result$statistic, 3)
+  ),
+  `P-value` = c(
+    round(test1_result$p_value, 4),
+    round(test2_result$p_value, 4),
+    round(test3_result$p_value, 4),
+    round(test4_result$p.value, 4)
+  ),
+  `Significant?` = c(
+    ifelse(test1_result$p_value < 0.05, "Yes", "No"),
+    ifelse(test2_result$p_value < 0.05, "Yes", "No"),
+    ifelse(test3_result$p_value < 0.05, "Yes", "No"),
+    ifelse(test4_result$p.value < 0.05, "Yes", "No")
+  )
+)
+
+test_summary |>
+  kable(caption = "Summary of All Statistical Hypothesis Tests (α = 0.05)",
+        col.names = c("Test", "Type", "Statistic", "P-value", "Significant?")) |>
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#2F5496") |>
+  column_spec(5, bold = TRUE, 
+              color = ifelse(test_summary$Significant. == "Yes", "darkgreen", "darkred"))
+```
+
+
+::: {.callout-note icon=false}
+## 🔑 Key Findings from Statistical Analysis
+
+**Based on the four hypothesis tests conducted:**
+
+1. **Revision Magnitude (Post-2020):** The analysis `r ifelse(test1_result$p_value < 0.05, "shows", "does not show")` statistically significant evidence that absolute revisions have changed in the post-2020 period.
+
+2. **Directional Bias (Post-2000):** There is `r ifelse(test2_result$p_value < 0.05, "evidence", "no evidence")` that the proportion of negative vs positive revisions has shifted since 2000.
+
+3. **Large Revisions:** The data `r ifelse(test3_result$p_value < 0.05, "supports", "does not support")` claims that very large revisions (>1% of employment) have become more frequent in recent years.
+
+4. **Overall Bias:** The test `r ifelse(test4_result$p.value < 0.05, "reveals", "does not reveal")` systematic bias in BLS initial estimates across the full 45-year period.
+
+:::
+
+---
+
+## ✅ T5: Fact-Check of Claims About BLS
+
+This final deliverable section uses the data analysis to complete two fact-checks for claims around the BLS Revisions.
+
+![](https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&h=300&fit=crop)
+
+---
+
+### **Fact-Check #1: Labor Secretary Lori Chavez-DeRemer**
+### *"String of Major Revisions"*
+
+```{=html}
+<div class="claim-box">
+<h3>🎯 Claim Under Review</h3>
+<p style="font-size: 1.15em; font-style: italic;">"A recent string of major revisions have come to light and raised concerns about decisions being made by the Biden-appointed Labor Commissioner."</p>
+<p><strong>Claimant:</strong> Lori Chavez-DeRemer, U.S. Labor Secretary</p>
+<p><strong>Date:</strong> August 1, 2025</p>
+<p><strong>Source:</strong> <a href="https://thehill.com/business/5432857-trump-fires-bls-commissioner/" style="color: white; text-decoration: underline;">The Hill</a></p>
+</div>
+```
+
+#### **What's Being Tested**
+
+This claim has two testable components:
+
+1. There has been a "string" (pattern) of "major" revisions during McEntarfer's tenure
+2. These revisions are unusual enough to "raise concerns" about her decision-making
+
+Revision patterns will be compared during McEntarfer's 19-month tenure to historical norms across the entire 46-year dataset.
+
+#### **Statistical Tests for Chavez-DeRemer Claim**
+
+```{r}
+#| label: factcheck1-mcentarfer-period
+#| code-summary: "Show Test Code"
+#| message: false
+#| warning: false
+
+# Define McEntarfer's tenure period
+mcentarfer_start <- ym("2024-01")
+mcentarfer_end <- ym("2025-08")
+
+# Create comparison dataset WITH abs_revision column
+chavez_test_data <- ces_combined |>
+  filter(!is.na(revision)) |>
+  mutate(
+    abs_revision = abs(revision),
+    mcentarfer_period = date >= mcentarfer_start & date <= mcentarfer_end,
+    period_label = if_else(mcentarfer_period, "McEntarfer Era", "Historical")
+  )
+
+# Test 1: Two-sample t-test for average absolute revision
+test_mcentarfer_magnitude <- chavez_test_data |>
+  t_test(
+    formula = abs_revision ~ period_label,
+    order = c("McEntarfer Era", "Historical"),
+    alternative = "two.sided"
+  )
+
+# Calculate descriptive statistics
+mcentarfer_stats <- chavez_test_data |>
+  group_by(period_label) |>
+  summarize(
+    N = n(),
+    `Mean Absolute Revision` = mean(abs_revision, na.rm = TRUE),
+    `Median Absolute Revision` = median(abs_revision, na.rm = TRUE),
+    `SD` = sd(abs_revision, na.rm = TRUE),
+    `Major Revisions (>50k)` = sum(abs_revision > 50, na.rm = TRUE),
+    `% Major` = (sum(abs_revision > 50, na.rm = TRUE) / n()) * 100
+  )
+
+# Display results
+test_mcentarfer_magnitude |>
+  select(`Test Statistic` = statistic, 
+         `P-value` = p_value, 
+         `Difference` = estimate,
+         `95% CI Lower` = lower_ci,
+         `95% CI Upper` = upper_ci) |>
+  kable(caption = "Test 2A: Average Absolute Revision - McEntarfer Era vs Historical",
+        digits = 3) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#70AD47")
+
+mcentarfer_stats |>
+  kable(caption = "Revision Magnitude by Period",
+        digits = 2,
+        col.names = c("Period", "N", "Mean", "Median", "Std Dev", "Major (>50k)", "% Major")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#70AD47")
+```
+
+
+**Interpretation:** During McEntarfer's tenure (Jan 2024 - Aug 2025), the average absolute revision was `r round(mcentarfer_stats$"Mean Absolute Revision"[mcentarfer_stats$period_label == "McEntarfer Era"], 1)`K jobs compared to `r round(mcentarfer_stats$"Mean Absolute Revision"[mcentarfer_stats$period_label == "Historical"], 1)`K jobs historically. With a p-value of `r round(test_mcentarfer_magnitude$p_value, 3)`, we `r ifelse(test_mcentarfer_magnitude$p_value < 0.05, "**do find**", "**do not find**")` statistically significant evidence that revisions were larger during her tenure.
+
+
+```{r}
+#| label: factcheck1-proportion-major
+#| code-summary: "Show Test Code"
+#| message: false
+#| warning: false
+
+# Test 2: Proportion test for "major" revisions
+test_mcentarfer_proportion <- chavez_test_data |>
+  mutate(is_major_revision = abs(revision) > 50) |>
+  prop_test(
+    formula = is_major_revision ~ period_label,
+    order = c("McEntarfer Era", "Historical"),
+    alternative = "greater"
+  )
+
+# Display results
+test_mcentarfer_proportion |>
+  select(`Test Statistic` = statistic,
+         `P-value` = p_value,
+         `95% CI Lower` = lower_ci) |>
+  kable(caption = "Test 2B: Proportion of Major Revisions (>50k jobs)",
+        digits = 3) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#70AD47")
+```
+
+
+**Interpretation:** The proportion of major revisions (>50,000 jobs) was `r round(mcentarfer_stats$"% Major"[mcentarfer_stats$period_label == "McEntarfer Era"], 1)`% during McEntarfer's tenure versus `r round(mcentarfer_stats$"% Major"[mcentarfer_stats$period_label == "Historical"], 1)`% historically. The one-sided test (p = `r round(test_mcentarfer_proportion$p_value, 3)`) `r ifelse(test_mcentarfer_proportion$p_value < 0.05, "shows", "does not show")` statistically significant evidence that major revisions were more frequent under McEntarfer.
+
+<br>
+
+#### **Supporting Evidence**
+
+**Statistic 1: Largest Single Revisions in History**
+
+```{r}
+#| label: factcheck1-stat1
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+top_revisions_all_time <- ces_combined |>
+  filter(!is.na(revision)) |>
+  arrange(desc(abs(revision))) |>
+  head(10) |>
+  mutate(
+    `During McEntarfer?` = if_else(date >= mcentarfer_start & date <= mcentarfer_end, "Yes", "No")
+  ) |>
+  select(Date = date, Revision = revision, `Absolute Revision` = abs_revision_pct, `During McEntarfer?`)
+
+top_revisions_all_time |>
+  kable(caption = "Top 10 Largest Absolute Revisions in History (1979-2025)",
+        digits = 1) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#ED7D31") |>
+  column_spec(4, bold = TRUE, 
+              color = ifelse(top_revisions_all_time$`During McEntarfer?` == "Yes", "darkred", "black"))
+```
+
+<br>
+
+*Of the 10 largest revisions in the 46-year history, `r sum(top_revisions_all_time$"During McEntarfer?" == "Yes")` occurred during McEntarfer's 19-month tenure.*
+
+<br>
+
+**Statistic 2: Average Absolute Revision by Year (2020-2025)**
+```{r}
+#| label: factcheck1-stat2
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+recent_years_revisions <- ces_combined |>
+  filter(year >= 2020, !is.na(revision)) |>
+  group_by(year) |>
+  summarize(
+    N = n(),
+    `Avg Absolute Revision` = mean(abs(revision)),
+    `Max Revision` = max(abs(revision))
+  ) |>
+  mutate(
+    `McEntarfer Commissioner?` = if_else(year >= 2024, "Yes", "No")
+  )
+
+recent_years_revisions |>
+  kable(caption = "Recent Years Revision Summary",
+        digits = 1,
+        col.names = c("Year", "N", "Avg Absolute", "Max Absolute", "McEntarfer Era?")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#ED7D31") |>
+  row_spec(which(recent_years_revisions$year >= 2024), background = "#ffe6e6")
+```
+
+<br>
+
+**Statistic 3: Historical Context - Revisions During Economic Volatility**
+```{r}
+#| label: factcheck1-stat3
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+volatility_stats <- ces_combined |>
+  filter(!is.na(revision)) |>
+  mutate(
+    period = case_when(
+      year %in% 2008:2009 ~ "2008-2009 (Financial Crisis)",
+      year %in% 2020:2021 ~ "2020-2021 (COVID-19)",
+      year %in% 2024:2025 ~ "2024-2025 (McEntarfer Era)",
+      TRUE ~ "Other"
+    )
+  ) |>
+  filter(period != "Other") |>
+  group_by(period) |>
+  summarize(
+    N = n(),
+    `Avg Absolute Revision` = mean(abs(revision)),
+    `Max Absolute Revision` = max(abs(revision)),
+    `% Over 50k` = (sum(abs(revision) > 50) / n()) * 100
+  )
+
+volatility_stats |>
+  kable(caption = "Revisions During Economic Disruption Periods",
+        digits = 1,
+        col.names = c("Period", "N", "Avg Absolute", "Max", "% Major (>50k)")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#ED7D31") |>
+  row_spec(3, background = "#ffe6e6")
+```
+
+<br>
+
+#### **Visualizations**
+
+**Visualization 1: Revisions Over Time (Highlighting McEntarfer Era)**
+```{r}
+#| label: factcheck1-viz1
+#| code-summary: "Show Visualization Code"
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+ces_combined |>
+  filter(!is.na(revision)) |>
+  mutate(
+    period_highlight = case_when(
+      date >= mcentarfer_start & date <= mcentarfer_end ~ "McEntarfer Era",
+      TRUE ~ "Historical"
+    )
+  ) |>
+  ggplot(aes(x = date, y = revision)) +
+  geom_col(aes(fill = period_highlight, alpha = period_highlight), width = 30) +
+  scale_fill_manual(values = colors_mcentarfer) +
+  scale_alpha_manual(values = c("McEntarfer Era" = 1, "Historical" = 0.5)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  scale_y_continuous(labels = comma) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(
+    title = "CES Employment Revisions Over Time",
+    subtitle = "McEntarfer era (Jan 2024 - Aug 2025) highlighted in red",
+    x = NULL,
+    y = "Revision (thousands of jobs)",
+    fill = "Period",
+    alpha = "Period",
+    caption = "Source: Bureau of Labor Statistics"
+  ) +
+  custom_theme()
+```
+
+<br>
+
+**Visualization 2: Distribution Comparison - McEntarfer vs Historical**
+```{r}
+#| label: factcheck1-viz2
+#| code-summary: "Show Visualization Code"
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+chavez_test_data |>
+  ggplot(aes(x = revision, fill = period_label)) +
+  geom_histogram(alpha = 0.6, bins = 30, position = "identity") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "#E74C3C") +
+  facet_wrap(~ period_label, ncol = 1, scales = "free_y") +
+  scale_fill_manual(values = c("McEntarfer Era" = "#E74C3C", "Historical" = "#3498DB")) +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title = "Distribution of Revisions: McEntarfer Era vs Historical",
+    subtitle = "Are McEntarfer-era revisions distributed differently?",
+    x = "Revision (thousands of jobs)",
+    y = "Frequency",
+    fill = "Period",
+    caption = "Source: Bureau of Labor Statistics"
+  ) +
+  custom_theme() +
+  theme(legend.position = "none")
+```
+
+<br>
+
+```{=html}
+<div class="verdict-box">
+<h3 style="color: white; margin-top: 0;">📌 THE VERDICT: HALF TRUE ⚖️</h3>
+<p style="font-size: 1.15em; text-align: center; margin: 1rem 0;">Secretary Chavez-DeRemer's claim contains elements of truth but lacks critical historical context.</p>
+</div>
+```
+
+**What's Accurate:** ✅
+
+- There were several large revisions during McEntarfer's 19-month tenure
+- The May-June 2025 combined revision of -258,000 jobs was substantial
+- McEntarfer's tenure occurred during a period of elevated revision activity
+
+**What's Misleading:** ❌
+
+- Statistical tests show revision magnitudes during McEntarfer's tenure were **not** significantly different from historical patterns (p = `r round(test_mcentarfer_magnitude$p_value, 3)`)
+- Large revisions consistently occur during periods of economic uncertainty, regardless of who leads BLS
+- The 2008-2009 financial crisis and 2020-2021 COVID-19 pandemic saw comparable or larger revisions
+- McEntarfer had no direct control over the data collection or revision process
+
+**Critical Context:** 💡
+
+McEntarfer was BLS Commissioner for only 19 months during a period of significant economic transition. Large revisions during this time reflect the difficulty of measuring employment in real-time during uncertain economic conditions, not failures in leadership.
+
+**Bottom Line:**
+
+While there were major revisions during McEntarfer's tenure, claiming these are due to poor decision-making ignores historical context. Large revisions are an expected feature of the employment data revision process, particularly during periods of economic uncertainty. The claim contains an element of truth *but strips away essential context*.
+
+---
+
+### **Fact-Check #2: Kevin Hassett**
+### *"Must Be a Typo" After 40 Years of Experience*
+
+```{=html}
+<div class="claim-box">
+<h3>🎯 Claim Under Review</h3>
+<p style="font-size: 1.15em; font-style: italic;">"I've been looking at [jobs data] for 40 years. And I'm like, 'It must be a typo.'"</p>
+<p style="font-size: 1.15em; font-style: italic;">"If I were running the BLS and I had the biggest downward revision in 50 years, I would have a really, really detailed report explaining why it happened."</p>
+<p><strong>Claimant:</strong> Kevin Hassett, Director of the White House National Economic Council</p>
+<p><strong>Date:</strong> August 3-4, 2025 (Sunday morning shows)</p>
+<p><strong>Source:</strong> <a href="https://www.newsweek.com/white-house-terrible-bls-jobs-data-typo-2108391" style="color: white; text-decoration: underline;">Newsweek</a></p>
+</div>
+```
+
+#### **What's Being Tested**
+
+This claim has three testable components:
+
+1. The 258,000 two-month revision (May-June 2025) is so unusual that someone with 40 years of experience would think it's an error
+2. Recent revisions represent the "biggest downward revision in 50 years"
+3. The revisions constitute "hard evidence" of something wrong (implying statistical anomaly)
+
+#### **Statistical Tests for Hassett Claim**
+
+```{r}
+#| label: factcheck2-two-month-revisions
+#| code-summary: "Show Test Code"
+#| message: false
+#| warning: false
+
+# Calculate all possible two-month combined revisions
+two_month_revisions <- ces_combined |>
+  filter(!is.na(revision)) |>
+  arrange(date) |>
+  mutate(
+    next_revision = lead(revision),
+    two_month_combined = revision + next_revision
+  ) |>
+  filter(!is.na(two_month_combined)) |>
+  mutate(abs_two_month = abs(two_month_combined))
+
+# Find where 258,000 would rank
+rank_258k <- sum(two_month_revisions$abs_two_month > 258) + 1
+total_periods <- nrow(two_month_revisions)
+percentile_258k <- round(100 - (rank_258k / total_periods * 100), 1)
+
+# Get top 15 two-month revisions
+top_two_month <- ces_combined |>
+  filter(!is.na(revision)) |>
+  arrange(date) |>
+  mutate(
+    next_revision = lead(revision),
+    two_month_combined = revision + next_revision,
+    abs_two_month = abs(two_month_combined)
+  ) |>
+  filter(!is.na(two_month_combined)) |>
+  arrange(desc(abs_two_month)) |>
+  head(15) |>
+  mutate(
+    Rank = row_number(),
+    `Exceeds 258k?` = if_else(abs_two_month > 258, "Yes", "No")
+  ) |>
+  select(Rank, Date = date, `Two-Month Combined` = two_month_combined, 
+         `Absolute Value` = abs_two_month, `Exceeds 258k?`)
+
+top_two_month |>
+  kable(caption = "Top 15 Largest Two-Month Combined Revisions (1979-2025)",
+        digits = 0,
+        format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  column_spec(5, bold = TRUE,
+              color = ifelse(top_two_month$`Exceeds 258k?` == "Yes", "darkred", "black"))
+```
+
+**Analysis:** A two-month combined revision of 258,000 jobs would rank approximately **#`r rank_258k`** out of `r total_periods` two-month periods in the 46-year dataset (**`r percentile_258k`th percentile**). There are **`r sum(two_month_revisions$abs_two_month > 258)` two-month periods** with larger absolute revisions than 258,000 jobs.
+
+<br>
+
+```{r}
+#| label: factcheck2-hassett-career
+#| code-summary: "Show Test Code"
+#| message: false
+#| warning: false
+
+# Hassett's 40-year career (1985-2025)
+hassett_period <- ces_combined |>
+  filter(year >= 1985, year <= 2025, !is.na(revision)) |>
+  mutate(abs_revision = abs(revision))
+
+hassett_summary <- data.frame(
+  Period = "Hassett's Career (1985-2025)",
+  `Total Months` = nrow(hassett_period),
+  `Over 100k` = sum(hassett_period$abs_revision > 100),
+  `Over 150k` = sum(hassett_period$abs_revision > 150),
+  `Over 200k` = sum(hassett_period$abs_revision > 200),
+  `Over 250k` = sum(hassett_period$abs_revision > 250),
+  `Max Revision` = max(hassett_period$abs_revision)
+)
+
+hassett_summary |>
+  kable(caption = "Large Revisions During Hassett's 40-Year Career",
+        digits = 0,
+        format.args = list(big.mark = ","),
+        col.names = c("Period", "Total Months", ">100k", ">150k", ">200k", ">250k", "Maximum")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5")
+```
+
+**Interpretation:** During Hassett's claimed 40-year career observing jobs data (1985-2025), there have been `r hassett_summary$Over.200k` months with absolute revisions exceeding 200,000 jobs and `r hassett_summary$Over.250k` exceeding 250,000 jobs. For an experienced economist, a large revision should not be shocking enough to resemble a "typo."
+
+<br>
+
+```{r}
+#| label: factcheck2-50-years
+#| code-summary: "Show Test Code"
+#| message: false
+#| warning: false
+
+# Test "biggest in 50 years" claim
+fifty_years_revisions <- ces_combined |>
+  filter(year >= 1975, !is.na(revision)) |>
+  mutate(abs_revision = abs(revision)) |>
+  arrange(desc(abs_revision)) |>
+  head(10) |>
+  mutate(
+    Rank = row_number(),
+    Direction = if_else(revision > 0, "Upward", "Downward")
+  ) |>
+  select(Rank, Date = date, Year = year, Revision = revision, Direction)
+
+fifty_years_revisions |>
+  kable(caption = "Top 10 Largest Absolute Revisions in Past 50 Years",
+        digits = 0,
+        format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  column_spec(5, bold = TRUE,
+              color = ifelse(fifty_years_revisions$Direction == "Downward", "darkred", "darkgreen"))
+
+largest_downward <- fifty_years_revisions |>
+  filter(Direction == "Downward") |>
+  slice(1)
+```
+
+**Finding:** The largest downward revision in the past 50 years was `r format(abs(largest_downward$Revision), big.mark = ",")` thousand jobs in `r format(largest_downward$Date, "%B %Y")`. The claim about May-June 2025 being the "biggest downward revision in 50 years" is `r if(abs(largest_downward$Revision) > 258) {"**FALSE**"} else {"**TRUE**"}` - there have been larger downward revisions in the historical record.
+
+<br>
+
+#### **Supporting Evidence**
+
+**Statistic 1: Ranking of 258k Revision in Historical Context**
+```{r}
+#| label: factcheck2-stat1
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+revision_ranking_summary <- data.frame(
+  Metric = c(
+    "Total two-month periods analyzed",
+    "Rank of 258k revision",
+    "Percentile",
+    "Number exceeding 258k",
+    "Percentage exceeding 258k",
+    "Maximum two-month revision ever",
+    "Median two-month revision"
+  ),
+  Value = c(
+    format(total_periods, big.mark = ","),
+    paste0("#", rank_258k),
+    paste0(percentile_258k, "th"),
+    format(sum(two_month_revisions$abs_two_month > 258), big.mark = ","),
+    paste0(round((sum(two_month_revisions$abs_two_month > 258) / total_periods) * 100, 1), "%"),
+    format(round(max(two_month_revisions$abs_two_month)), big.mark = ","),
+    format(round(median(two_month_revisions$abs_two_month)), big.mark = ",")
+  )
+)
+
+revision_ranking_summary |>
+  kable(caption = "Where Does 258k Rank Among All Two-Month Revisions (1979-2025)?",
+        col.names = c("Metric", "Value")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  row_spec(c(2, 4, 5), background = "#fff3cd")
+```
+
+<br>
+
+**Statistic 2: Large Revisions During Hassett's Career (1985-2025)**
+```{r}
+#| label: factcheck2-stat2
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+hassett_career_breakdown <- data.frame(
+  `Threshold` = c(">50k", ">100k", ">150k", ">200k", ">250k", "Max Observed"),
+  `Count` = c(
+    sum(hassett_period$abs_revision > 50),
+    sum(hassett_period$abs_revision > 100),
+    sum(hassett_period$abs_revision > 150),
+    sum(hassett_period$abs_revision > 200),
+    sum(hassett_period$abs_revision > 250),
+    round(max(hassett_period$abs_revision))
+  ),
+  `Percentage of Career` = c(
+    paste0(round((sum(hassett_period$abs_revision > 50) / nrow(hassett_period)) * 100, 1), "%"),
+    paste0(round((sum(hassett_period$abs_revision > 100) / nrow(hassett_period)) * 100, 1), "%"),
+    paste0(round((sum(hassett_period$abs_revision > 150) / nrow(hassett_period)) * 100, 1), "%"),
+    paste0(round((sum(hassett_period$abs_revision > 200) / nrow(hassett_period)) * 100, 1), "%"),
+    paste0(round((sum(hassett_period$abs_revision > 250) / nrow(hassett_period)) * 100, 1), "%"),
+    "—"
+  )
+)
+
+hassett_career_breakdown |>
+  kable(caption = "Frequency of Large Revisions During Hassett's 40-Year Career (1985-2025)",
+        format.args = list(big.mark = ","),
+        col.names = c("Revision Threshold", "Number of Months", "% of Career Months")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  row_spec(4:5, background = "#ffe6e6", bold = TRUE)
+```
+
+<br>
+
+**Statistic 3: Top 10 Largest Single-Month Revisions in 50 Years**
+```{r}
+#| label: factcheck2-stat3
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+largest_50yrs <- ces_combined |>
+  filter(year >= 1975, !is.na(revision)) |>
+  mutate(abs_revision = abs(revision)) |>
+  arrange(desc(abs_revision)) |>
+  head(10) |>
+  mutate(
+    Rank = row_number(),
+    Direction = if_else(revision > 0, "Upward ↑", "Downward ↓"),
+    `Exceeds 258k?` = if_else(abs_revision > 258, "Yes", "No")
+  ) |>
+  select(Rank, Date = date, Year = year, 
+         `Revision (000s)` = revision, Direction, `Exceeds 258k?`)
+
+largest_50yrs |>
+  kable(caption = "Top 10 Largest Single-Month Revisions in Past 50 Years",
+        digits = 0,
+        format.args = list(big.mark = ",")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  column_spec(5, bold = TRUE,
+              color = ifelse(largest_50yrs$Direction == "Downward ↓", "darkred", "darkgreen")) |>
+  column_spec(6, bold = TRUE,
+              color = ifelse(largest_50yrs$`Exceeds 258k?` == "Yes", "darkred", "black"))
+```
+
+<br>
+
+**Statistic 4: Revisions by Decade - Has Accuracy Worsened?**
+```{r}
+#| label: factcheck2-stat4
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+revisions_by_decade <- ces_combined |>
+  filter(!is.na(revision)) |>
+  mutate(
+    decade = paste0(floor(year / 10) * 10, "s"),
+    abs_revision = abs(revision)
+  ) |>
+  group_by(decade) |>
+  summarize(
+    N = n(),
+    `Avg Absolute` = mean(abs_revision),
+    `Median Absolute` = median(abs_revision),
+    `Max Absolute` = max(abs_revision),
+    `Over 200k` = sum(abs_revision > 200),
+    `Over 250k` = sum(abs_revision > 250)
+  ) |>
+  arrange(decade)
+
+revisions_by_decade |>
+  kable(caption = "Average Revision Magnitude by Decade - Is BLS Getting Worse?",
+        digits = 1,
+        format.args = list(big.mark = ","),
+        col.names = c("Decade", "N", "Avg", "Median", "Max", ">200k", ">250k")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  row_spec(nrow(revisions_by_decade), background = "#ffe6e6")
+```
+
+<br>
+
+**Statistic 5: Economic Crisis Comparison**
+```{r}
+#| label: factcheck2-stat5
+#| code-summary: "Show Statistic Code"
+#| echo: false
+#| warning: false
+#| message: false
+
+crisis_stats <- ces_combined |>
+  filter(!is.na(revision)) |>
+  mutate(
+    abs_revision = abs(revision),
+    period = case_when(
+      year %in% 2008:2009 ~ "2008-09 Financial Crisis",
+      year %in% 2020:2021 ~ "2020-21 COVID-19",
+      year %in% 2024:2025 ~ "2024-25 Recent Period",
+      TRUE ~ "All Other Years"
+    )
+  ) |>
+  group_by(period) |>
+  summarize(
+    N = n(),
+    `Avg Absolute` = mean(abs_revision),
+    `Max Absolute` = max(abs_revision),
+    `Over 200k` = sum(abs_revision > 200),
+    `% Over 200k` = (sum(abs_revision > 200) / n()) * 100
+  )
+
+crisis_stats |>
+  kable(caption = "Revision Patterns During Major Economic Disruptions",
+        digits = 1,
+        format.args = list(big.mark = ","),
+        col.names = c("Period", "Months", "Avg", "Max", ">200k", "% >200k")) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) |>
+  row_spec(0, bold = TRUE, color = "white", background = "#5B9BD5") |>
+  row_spec(3, background = "#ffe6e6")
+```
+
+<br>
+
+#### **Visualizations**
+
+**Visualization 1: Distribution of Two-Month Revisions - Where Does 258k Rank?**
+
+```{r}
+#| label: factcheck2-viz1
+#| code-summary: "Show Visualization Code"
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+ggplot(two_month_revisions, aes(x = abs_two_month)) +
+  geom_histogram(bins = 50, fill = "#3498DB", alpha = 0.7, color = "white") +
+  geom_vline(xintercept = 258, color = "#E74C3C", linewidth = 2, linetype = "dashed") +
+  annotate("rect", xmin = 258, xmax = max(two_month_revisions$abs_two_month), 
+           ymin = 0, ymax = Inf, alpha = 0.1, fill = "#E74C3C") +
+  annotate("text", x = 258, y = 25, 
+           label = paste0("May-June 2025 (258k)\nRank: #", rank_258k, " of ", total_periods), 
+           color = "#E74C3C", hjust = -0.1, size = 4.5, fontface = "bold") +
+  annotate("text", x = 400, y = 20,
+           label = paste0(sum(two_month_revisions$abs_two_month > 258), 
+                         " two-month periods\nhad larger revisions"),
+           color = "#E74C3C", size = 4, fontface = "italic") +
+  labs(
+    title = "Distribution of Two-Month Combined Revisions (1979-2025)",
+    subtitle = "Hassett: 'I've been looking at data for 40 years... it must be a typo' - But is 258k really unprecedented?",
+    x = "Absolute Two-Month Combined Revision (thousands of jobs)",
+    y = "Frequency (Number of Two-Month Periods)",
+    caption = paste0("Source: BLS. The 258k revision ranks #", rank_258k, " out of ", total_periods, 
+                     " periods (", percentile_258k, "th percentile). Red shaded area shows revisions exceeding 258k.")
+  ) +
+  scale_x_continuous(labels = comma) +
+  custom_theme()
+```
+
+<br>
+
+**Visualization 2: Large Revisions During Hassett's 40-Year Career (1985-2025)**
+
+```{r}
+#| label: factcheck2-viz2
+#| code-summary: "Show Visualization Code"
+#| fig-width: 12
+#| fig-height: 7
+#| warning: false
+#| message: false
+
+hassett_career_viz <- ces_combined |>
+  filter(year >= 1985, year <= 2025, !is.na(revision)) |>
+  mutate(
+    abs_revision = abs(revision),
+    magnitude_category = case_when(
+      abs_revision >= 250 ~ "≥250k (Near 'Typo' Level)",
+      abs_revision >= 200 ~ "200-249k",
+      abs_revision >= 100 ~ "100-199k",
+      abs_revision >= 50 ~ "50-99k",
+      TRUE ~ "<50k"
+    ),
+    magnitude_category = factor(magnitude_category, 
+                                 levels = c("≥250k (Near 'Typo' Level)", "200-249k", 
+                                           "100-199k", "50-99k", "<50k"))
+  )
+
+ggplot(hassett_career_viz, aes(x = date, y = revision)) +
+  geom_col(aes(fill = magnitude_category, alpha = magnitude_category)) +
+  scale_fill_manual(
+    values = c(
+      "≥250k (Near 'Typo' Level)" = "#C0392B",
+      "200-249k" = "#E74C3C",
+      "100-199k" = "#F39C12",
+      "50-99k" = "#3498DB",
+      "<50k" = "#95A5A6"
+    )
+  ) +
+  scale_alpha_manual(
+    values = c(
+      "≥250k (Near 'Typo' Level)" = 1,
+      "200-249k" = 0.9,
+      "100-199k" = 0.7,
+      "50-99k" = 0.5,
+      "<50k" = 0.3
+    ),
+    guide = "none"
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5) +
+  geom_hline(yintercept = c(-258, 258), linetype = "dotted", color = "#C0392B", linewidth = 1) +
+  annotate("text", x = ym("1990-01"), y = 300, 
+           label = "Hassett's 'typo' threshold (±258k)", 
+           color = "#C0392B", size = 3.5, fontface = "italic") +
+  annotate("text", x = ym("2008-01"), y = -350,
+           label = paste0(hassett_summary$Over.200k, " months exceeded 200k\n",
+                         hassett_summary$Over.250k, " months exceeded 250k"),
+           color = "#C0392B", size = 3.5, fontface = "bold") +
+  scale_y_continuous(labels = comma) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(
+    title = "Employment Revisions During Hassett's Self-Proclaimed 40-Year Career (1985-2025)",
+    subtitle = "If Hassett has been observing jobs data since 1985, he's seen dozens of revisions exceeding 200k",
+    x = NULL,
+    y = "Revision (thousands of jobs)",
+    fill = "Revision Magnitude",
+    caption = "Source: BLS. Dotted lines mark ±258k 'typo' threshold. Dark red bars show revisions ≥250k."
+  ) +
+  custom_theme() +
+  guides(fill = guide_legend(nrow = 1))
+```
+
+<br>
+
+```{=html}
+<div class="verdict-box">
+<h3 style="color: white; margin-top: 0;">📌 THE VERDICT: MOSTLY FALSE ❌</h3>
+<p style="font-size: 1.15em; text-align: center; margin: 1rem 0;">Hassett's characterization is inconsistent with 45 years of historical data.</p>
+</div>
+```
+
+**What's Misleading:** ❌
+
+- The May-June 2025 combined revision of -258,000 jobs, while large, ranks **#`r rank_258k`** in the 46-year dataset
+- During Hassett's self-proclaimed 40-year career, there have been **`r hassett_summary$Over.200k` months** with absolute revisions exceeding 200,000 jobs
+- Statistical analysis shows the 2025 revisions are **not outliers** when compared to other periods of economic uncertainty
+- The claim that revisions are "hard evidence" of wrongdoing ignores that revisions are a standard, methodologically sound part of the BLS process
+
+**What Contains a Grain of Truth:** ✅
+
+- The revision was indeed large in absolute terms
+- It did contribute to a weaker picture of the labor market than initially reported
+
+**Why This Matters:** 💡
+
+Hassett is a trained economist with extensive experience. His characterization of a large-but-not-unprecedented revision as "must be a typo" appears to be hyperbole rather than an objective assessment of the data.
+
+**Bottom Line:**
+
+An experienced economist claiming a revision ranks as unprecedented when it demonstrably does not is misleading. While the May-June 2025 revision was large, characterizing it as so shocking it "must be a typo" or as the "biggest in 50 years" is inconsistent with the historical record.
+
+------------------------------------------------------------------------
+
+## 📝 Conclusion
+
+This comprehensive analysis of 45 years of BLS employment data reveals that while the 2024-2025 revisions were substantial, they were not unprecedented or indicative of systemic failures. Large revisions consistently occur during periods of economic uncertainty, regardless of political leadership. Both fact-checked claims contain elements of truth but lack essential historical context.
+
+------------------------------------------------------------------------
+
+**Acknowledgments**
+
+This work ©2025 by Swarnadeep Roy was initially prepared as a Mini-Project for STA 9750 at Baruch College. More details about this course can be found at [the course site](https://michael-weylandt.com/STA9750) and instructions for this assignment can be found at [MP #04](https://michael-weylandt.com/STA9750/miniprojects/mini04.html).
+</content>
+</document>
+
